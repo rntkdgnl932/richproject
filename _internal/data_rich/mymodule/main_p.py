@@ -16,7 +16,7 @@ import os.path
 import re
 
 # 패키지 다운 필요
-
+import win32console, win32gui
 # 나의 모듈
 from kiwoom import Kiwoom
 from ui import Ui_class
@@ -113,8 +113,12 @@ class MyApp(QDialog):
         # pyinstaller --hidden-import PyQt5 --hidden-import pyserial --hidden-import requests --hidden-import chardet --add-data="C:\\my_games\\richproject\\data_rich;./data_rich" --name richproject -i="rich_project.ico" --add-data="rich_project.ico;./" --icon="rich_project.ico" --paths "C:\Users\1_S_3\AppData\Local\Programs\Python\Python311\Lib\site-packages\cv2" main.py
 
         # self.setGeometry(1000 + 960 + 960, 300, 900, 600)
-        self.setGeometry(20 + 960, 200, 900, 700)
+        self.setGeometry(20 + 960 + 960, 200, 900, 700)
         self.show()
+
+
+        # 콘솔창
+        win32gui.ShowWindow(win32console.GetConsoleWindow(), 0)
 
         self.onetab = FirstTab()
         self.onetab.rich_start1_ready()
@@ -603,7 +607,7 @@ class FirstTab(QWidget):
         # 테스트 버튼
         self.mytestin = QPushButton('테스뚜')
         self.mytestin.clicked.connect(self.mytestin_)
-        self.perfect_pause = QPushButton('완전정지')
+        self.perfect_pause = QPushButton('끄기')
         self.perfect_pause.clicked.connect(self.moonlight_stop_perfect)
         self.again_restart = QPushButton('업데이트')
         self.again_restart.clicked.connect(self.again_restart_game)
@@ -1118,7 +1122,8 @@ class FirstTab(QWidget):
                 data = v_.now_cla
                 file.write(str(data))
                 time.sleep(0.2)
-            os.execl(sys.executable, sys.executable, *sys.argv)
+            # os.execl(sys.executable, sys.executable, *sys.argv)
+            sys.exit()
         except Exception as e:
             print(e)
             return 0

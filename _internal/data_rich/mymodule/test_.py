@@ -45,26 +45,29 @@ def go_test():
     now_time = now.strftime("%H%M%S")
     print("내 포트폴리오에 상세 업데이트 시간", now.strftime('%Y-%m-%d %H:%M:%S'), now_time)
 
-    code = "005930"  # 삼성전자
-    period = 7  # 이동평균 기간
+    sys.exit()
 
-    conn = http.client.HTTPSConnection("api.finance.naver.com")
-    payload = f"/siseJson.naver?symbol={code}&requestType=0&count=50&timeframe=day"
-    conn.request("GET", payload)
-    res = conn.getresponse()
-    data = res.read().decode('utf-8')
-    response_data = json.loads(data)
 
-    price_data = pd.DataFrame(response_data[1:], columns=response_data[0])
-    price_data.index = price_data["날짜"]
-    price_data = price_data[["시가", "고가", "저가", "종가", "거래량"]]
-
-    moving_average = price_data["종가"].rolling(window=period).mean()
-    last_ma_value = moving_average.iloc[-1]
-
-    pt = str(period) + "일 이동 평균 값 => " + str(last_ma_value)
-
-    print("이평선 결과 :", pt)
+    # code = "005930"  # 삼성전자
+    # period = 7  # 이동평균 기간
+    #
+    # conn = http.client.HTTPSConnection("api.finance.naver.com")
+    # payload = f"/siseJson.naver?symbol={code}&requestType=0&count=50&timeframe=day"
+    # conn.request("GET", payload)
+    # res = conn.getresponse()
+    # data = res.read().decode('utf-8')
+    # response_data = json.loads(data)
+    #
+    # price_data = pd.DataFrame(response_data[1:], columns=response_data[0])
+    # price_data.index = price_data["날짜"]
+    # price_data = price_data[["시가", "고가", "저가", "종가", "거래량"]]
+    #
+    # moving_average = price_data["종가"].rolling(window=period).mean()
+    # last_ma_value = moving_average.iloc[-1]
+    #
+    # pt = str(period) + "일 이동 평균 값 => " + str(last_ma_value)
+    #
+    # print("이평선 결과 :", pt)
 
 
     # if os.path.isfile(second_order_path) == True:

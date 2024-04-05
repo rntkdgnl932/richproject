@@ -37,7 +37,7 @@ sys.path.append('C:/my_games/richproject/data_rich/mymodule')
 # from function import imgs_set, imgs_set_, click_pos_2, random_int, text_check_get_3, int_put_, text_check_get, \
 #     click_with_image, drag_pos, image_processing, get_region, click_pos_reg
 
-
+import win32console, win32gui
 
 from massenger import line_monitor
 
