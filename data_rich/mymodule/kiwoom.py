@@ -23,7 +23,7 @@ sys.path.append('C:/my_games/' + str(v_.game_folder) + '/' + str(v_.data_folder)
 
 dir_path = "C:\\my_games\\" + str(v_.game_folder)
 file_path = dir_path + "\\" + str(v_.data_folder) + "\\mymodule\\condition_stock.txt"
-second_order_path = dir_path + "\\" + str(v_.data_folder) + "\\mymodule\\second_order_stock.txt"
+second_order_path = dir_path + "\\" + str(v_.data_folder) + "\\second_order\\second_order_stock.txt"
 
 from errorCode import errors
 from kiwoomType import *
