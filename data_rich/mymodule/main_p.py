@@ -1,11 +1,13 @@
 # * QTabWidget 탭에 다양한 위젯 추가
 import numpy as np
 from PyQt5.QtWidgets import *
-# from PyQt5.QtGui import QIcon, QFont       #아이콘
+from PyQt5.QtGui import QIcon, QFont, QColor     #아이콘
 from PyQt5.QtCore import Qt, QThread
 from PyQt5.QtWidgets import *
 
 import sys
+import datetime
+import json
 
 import variable as v_
 
@@ -17,6 +19,7 @@ import re
 
 # 패키지 다운 필요
 import win32console, win32gui
+from PyQt5.QtTest import *
 # 나의 모듈
 from kiwoom import Kiwoom
 from ui import Ui_class
@@ -41,7 +44,6 @@ table_datas = ""
 #  onCollection= False
 onCla = 'none'
 onCharacter = 0
-onRefresh_time = 0
 onDunjeon_1 = "none"
 onDunjeon_1_level = 0
 onDunjeon_2 = "none"
@@ -131,7 +133,6 @@ class ThirdTab(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-        # self.set_rand_int()
 
     def initUI(self):
 
@@ -307,7 +308,6 @@ class SecondTab(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-        # self.set_rand_int()
 
     def initUI(self):
 
@@ -581,7 +581,8 @@ class FirstTab(QWidget):
     def initUI(self):
         global rowcount, colcount
 
-        self.time_test_result_ = 0
+
+
 
         dir_path = "C:\\my_games\\" + str(v_.game_folder)
         file_path = dir_path + "\\mysettings\\myschedule\\schedule.txt"
@@ -589,14 +590,16 @@ class FirstTab(QWidget):
         file_path5 = dir_path + "\\" + str(v_.data_folder) + "\\jadong\\jadong_force_list.txt"
 
 
-
+        # def set
         self.tableWidget = QTableWidget()
         # self.tableWidget.setRowCount(len(lines))
-        self.tableWidget.setRowCount(9)
-        self.tableWidget.setColumnCount(8)
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.setColumnCount(7)
+        self.tableWidget.setSortingEnabled(True)
+        # self.tableWidget.sortByColumn(1, Qt.DescendingOrder)
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tableWidget.verticalHeader().setVisible(False)  # 행번호 안나오게 하는 코드
-        self.tableWidget.setHorizontalHeaderLabels(["종목", "체결일", "매수단가", "수익률", "종목", "체결일", "매수단가", "수익률"])
+        self.tableWidget.setHorizontalHeaderLabels(["종목", "종목코드", "보유수량", "현재매입금액", "매입가", "현재가", "수익률(%)"])
 
         self.label = QLabel('')
 
@@ -619,12 +622,12 @@ class FirstTab(QWidget):
 
         # 강제 노역(서브퀘스트 강제수행)
 
-        self.force_sub = QGroupBox('매수중인 종목')
+        self.force_sub = QGroupBox('매수중인 종목 갯수')
 
-        self.my_refresh_time_test = QLabel("현재 시간 : " + str(self.time_test_result_) + "\n\n")
+        self.my_stock_load = QLabel("현재 : " + str("로드 중") + "\n\n")
 
         test_box_ = QHBoxLayout()
-        test_box_.addWidget(self.my_refresh_time_test)
+        test_box_.addWidget(self.my_stock_load)
 
         self.force_sub.setLayout(test_box_)
 
@@ -739,17 +742,19 @@ class FirstTab(QWidget):
         self.com_group3_level.setLayout(vbox_level)
 
         # 초기화 시간 수정
-        self.com_group33 = QGroupBox('초기화 시간 수정')
-        cb33 = QComboBox()
-        list33 = ['시간 선택', '5', '6', '7', '8', '9', '10', '11']
-        cb33.addItems(list33)
-        vbox33 = QVBoxLayout()
-        vbox33.addWidget(cb33)
-        refresh_time_ = QPushButton('시간 수정')
-        refresh_time_.clicked.connect(self.onActivated_re_time)
+        #  onActivated_re_time 매수중인 종목
+        self.com_group33 = QGroupBox('총 매입금액 및 총 수익')
 
-        vbox33.addWidget(refresh_time_)
-        self.com_group33.setLayout(vbox33)
+        self.result_kiwoom_data_1 = "총 매입금액 : " + str("로드 중") + "\n\n"
+        self.result_kiwoom_data_2 = "현재 총 수익 : " + str("로드 중") + "\n\n"
+
+        self.my_stock_all_buy_money = QLabel(str("총 매입금액 : " + str("로드 중") + "\n\n"))
+        self.my_stock_all_rate = QLabel(str("현재 총 수익 : " + str("로드 중") + "\n\n"))
+
+        buy_box_ = QVBoxLayout()
+        buy_box_.addWidget(self.my_stock_all_buy_money)
+        buy_box_.addWidget(self.my_stock_all_rate)
+        self.com_group33.setLayout(buy_box_)
 
         # 초기화 시간
         dir_path = "C:\\my_games\\" + str(v_.game_folder)
@@ -998,7 +1003,7 @@ class FirstTab(QWidget):
 
         cb_cla.activated[str].connect(self.onActivated_cla)  # 요건 함수
         cb3.activated[str].connect(self.onActivated_character)  # 요건 함수
-        cb33.activated[str].connect(self.onActivated_time)  # 요건 함수
+        # cb33.activated[str].connect(self.onActivated_time)  # 요건 함수
         #던전
         dun_g1_name.activated[str].connect(self.onActivated_dunjeon_1)  # 던전1 이름
         dun_g1_stair.activated[str].connect(self.onActivated_dunjeon_1_level)  # 던전1 층수
@@ -1104,7 +1109,6 @@ class FirstTab(QWidget):
         vbox.addLayout(hbox2)
         self.setLayout(vbox)
 
-        # self.rich_start1_ready()
 
     def moonlight_stop_perfect(self):
         try:
@@ -1336,14 +1340,7 @@ class FirstTab(QWidget):
             print("jkj")
 
 
-    def onActivated_time(self, text):
-        global onRefresh_time
-        if text != 0 and text != '시간 선택':
-            onRefresh_time = text
-            print('onRefresh_time : ', onRefresh_time)
-        else:
-            onRefresh_time = 6
-            print("시간을 선택해 주세요.")
+
 
     def onActivated_dunjeon_1(self, text):
         global onDunjeon_1
@@ -1454,30 +1451,6 @@ class FirstTab(QWidget):
             onMaul = 'none'
             print("마을 의뢰 장소를 선택해 주세요.")
 
-    def onActivated_re_time(self):
-        global onRefresh_time
-        if onRefresh_time == '시간 선택' or onRefresh_time == 'none':
-            # pyautogui.alert(button='넵', text='던전을 선택해 주시지예', title='아 진짜 뭐합니꺼')
-            reply = QMessageBox.question(self, '던전을 선택해 주시지예', '아 진짜 뭐합니꺼?',
-                                         QMessageBox.Yes, QMessageBox.NoButton)
-
-
-        else:
-            print('onRefresh_time', onRefresh_time)
-            dir_path = "C:\\my_games\\" + str(v_.game_folder)
-            file_path13 = dir_path + "\\mysettings\\refresh_time\\refresh_time.txt"
-            isRefresh = False
-            while isRefresh is False:
-                if os.path.isfile(file_path13) == True:
-                    with open(file_path13, "w", encoding='utf-8-sig') as file:
-                        file.write(onRefresh_time)
-                    with open(file_path13, "r", encoding='utf-8-sig') as file:
-                        isRefresh = True
-                        refresh_time = file.read()
-                        print("저장된 초기화 시간", onRefresh_time)
-                else:
-                    with open(file_path13, "w", encoding='utf-8-sig') as file:
-                        file.write(onRefresh_time)
 
     def onActivated_dunjeon_1_add(self):
         char_ = onCharacter
@@ -1751,177 +1724,134 @@ class FirstTab(QWidget):
             dir_path = "C:\\my_games\\" + str(v_.game_folder)
             file_path = dir_path + "\\mysettings\\myschedule\\schedule.txt"
             file_path3 = dir_path + "\\mysettings\\myschedule\\schedule2.txt"
+            rich_mystock_path_1 = dir_path + "\\mysettings\\myschedule\\result_kiwoom_data_1.txt"
+            rich_mystock_path_2 = dir_path + "\\mysettings\\myschedule\\result_kiwoom_data_2.txt"
+
             if os.path.isfile(file_path) == True:
                 # 파일 읽기
                 with open(file_path, "r", encoding='utf-8-sig') as file:
-                    lines = file.read().splitlines()
+                    lines = json.load(file)
             else:
                 print('파일 없당')
                 if os.path.isdir(dir_path) == True:
                     print('디렉토리 존재함')
-                    with open(file_path3, "r", encoding='utf-8-sig') as file:
-                        shcedule = file.read().splitlines()
-                        with open(file_path, "w", encoding='utf-8-sig') as file:
-                            file.write(str(shcedule))
-                            with open(file_path, "r", encoding='utf-8-sig') as file:
-                                lines = file.read().splitlines()
+                    # with open(file_path3, "r", encoding='utf-8-sig') as file:
+                    #     shcedule = file.read().splitlines()
+                    #     with open(file_path, "w", encoding='utf-8-sig') as file:
+                    #         file.write(str(shcedule))
+                    #         with open(file_path, "r", encoding='utf-8-sig') as file:
+                    #             lines = file.read()
                 else:
                     print('디렉토리 존재하지 않음')
                     os.makedirs(dir_path)
                     with open(file_path3, "r", encoding='utf-8-sig') as file:
-                        shcedule = file.read().splitlines()
+                        shcedule = json.load(file)
                         with open(file_path, "w", encoding='utf-8-sig') as file:
-                            file.write(shcedule)
+                            json.dump(shcedule, file)
                             with open(file_path, "r", encoding='utf-8-sig') as file:
-                                lines = file.read().splitlines()
+                                lines = json.load(file)
 
             # print("ggggggggggggggggg", lines)
 
             # self.tableWidget.insertRow(self.tableWidget.rowCount(2))
-            self.tableWidget.setColumnWidth(0, 50)
-            self.tableWidget.setColumnWidth(1, 40)
-            self.tableWidget.setColumnWidth(2, 240)
-            self.tableWidget.setColumnWidth(3, 80)
-            self.tableWidget.setColumnWidth(4, 50)
-            self.tableWidget.setColumnWidth(5, 40)
-            self.tableWidget.setColumnWidth(6, 240)
-            self.tableWidget.setColumnWidth(7, 80)
-
-            for i in range(len(lines)):
-                result = str(lines[i]).split(":")
-                for j in range(len(result)):
-                    self.tableWidget.setItem(i, j, QTableWidgetItem())
-                    self.tableWidget.item(i, j).setText(str(result[j].replace("\n", "")))
-                    self.tableWidget.item(i, j).setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-                    # self.tableWidget.resizeColumnsToContents()
-
-        except Exception as e:
-            print(e)
-            return 0
-
-    def set_rand_int_jinhang(self, cla):
-        try:
-            dir_path = "C:\\my_games\\" + str(v_.game_folder)
-            file_path = dir_path + "\\mysettings\\myschedule\\schedule.txt"
-            file_path3 = dir_path + "\\mysettings\\myschedule\\schedule2.txt"
-            if os.path.isfile(file_path) == True:
-                # 파일 읽기
-                with open(file_path, "r", encoding='utf-8-sig') as file:
-                    lines = file.read().splitlines()
-                    print("lines", lines)
-                    print("len(lines)", len(lines))
-            else:
-                print('파일 없당')
-                if os.path.isdir(dir_path) == True:
-                    print('디렉토리 존재함')
-                    with open(file_path3, "r", encoding='utf-8-sig') as file:
-                        shcedule = file.read().splitlines()
-                        with open(file_path, "w", encoding='utf-8-sig') as file:
-                            file.write(shcedule)
-                            with open(file_path, "r", encoding='utf-8-sig') as file:
-                                lines = file.read().splitlines()
-                else:
-                    print('디렉토리 존재하지 않음')
-                    os.makedirs(dir_path)
-                    with open(file_path3, "r", encoding='utf-8-sig') as file:
-                        shcedule = file.read().splitlines()
-                        with open(file_path, "w", encoding='utf-8-sig') as file:
-                            file.write(shcedule)
-                            with open(file_path, "r", encoding='utf-8-sig') as file:
-                                lines = file.read().splitlines()
-
-            ########################################
-            cla_schedule = ""
-            for i in range(len(lines)):
-                complete_ = lines[i].split(":")
-                for j in range(len(complete_)):
-                    if cla == 'one' or cla == "Three":
-                        if j < 3:
-                            cla_schedule += complete_[j] + ":"
-                        if j == 3:
-                            cla_schedule += complete_[3] + "\n"
-                    if cla == 'two' or cla == "four":
-                        if 3 < j < 7:
-                            cla_schedule += complete_[j] + ":"
-                        if j == 7:
-                            cla_schedule += complete_[7] + "\n"
-            # 시작 스케쥴 파악하기
-            forBreak = False
-            schedule_ = cla_schedule.split("\n")
-            schedule_ = ' '.join(schedule_).split()
-            print("schedule_", schedule_)
-            for i in range(len(schedule_)):
-                schedule_2 = schedule_[i].split(":")
-                for j in range(len(schedule_2)):
-                    if schedule_2[3] != "완료":
-                        forBreak = True
-                        print("대기중인 첫번째", i)
-                        start_ = i
-                        break
-                if forBreak == True:
-                    break
-            print("진행중인 줄", start_)
-            start = schedule_[start_].split(":")
-            start = ' '.join(start).split()
-            print("start[3]! 대기중을 진행중으로 보이게 하기", start[3])
-            # start_ 줄(i), 진행중 (start[3])
-
-            cla_schedule = ""
-            for i in range(len(lines)):
-                complete_ = lines[i].split(":")
-                for j in range(len(complete_)):
-                    if (cla == 'one' or cla == "three") and i == start_ and j == 3:
-                        cla_schedule += complete_[j].replace("대기중", "진행중:")
-                    elif (cla == 'two' or cla == "four") and i == start_ and j == 7:
-                        cla_schedule += complete_[j].replace("대기중", "진행중\n")
-                    else:
-                        if j == 7:
-                            cla_schedule += complete_[j] + "\n"
-                        else:
-                            cla_schedule += complete_[j] + ":"
-            print("cla_schedule", cla_schedule)
-            mycla_schedule = cla_schedule.split('\n')
-            mycla_schedule = ' '.join(mycla_schedule).split()
-            print("mycla_schedule", mycla_schedule)
+            # "종목", "종목코드", "보유수량", "현재매입금액", "매입가", "현재가", "수익률(%)"
+            self.tableWidget.setColumnWidth(0, 200)
+            self.tableWidget.setColumnWidth(1, 100)
+            self.tableWidget.setColumnWidth(2, 65)
+            self.tableWidget.setColumnWidth(3, 150)
+            self.tableWidget.setColumnWidth(4, 100)
+            self.tableWidget.setColumnWidth(5, 100)
+            self.tableWidget.setColumnWidth(6, 120)
 
             remove_ = self.tableWidget.rowCount()
             print("remove_", remove_)
-            for i in range(remove_ - 1):
-                self.tableWidget.removeRow(0)
+            if remove_ > 0:
+                for i in range(remove_):
+                    self.tableWidget.removeRow(0)
 
-            rowcount = self.tableWidget.rowCount()
-            print("refresh_rowcount", self.tableWidget.rowCount())
-            count_ = len(mycla_schedule) - rowcount
-            for i in range(count_):
-                self.tableWidget.insertRow(self.tableWidget.rowCount())
-            print("refresh_rowcount2", self.tableWidget.rowCount())
+            if lines:
 
-            # self.tableWidget.clear
+                num_rows = len(lines)  # 파일에서 읽은 데이터의 행 수를 가져옴
+                result_stocks = "현재 : " + str(num_rows) + "\n\n"
+                self.my_stock_load.setText(str(result_stocks))
+                self.my_stock_load.repaint()
+                print("내 보유종목 갯수", num_rows)
 
-            # self.tableWidget.insertRow(self.tableWidget.rowCount(2))
+                # 파일읽기
+                if os.path.isfile(rich_mystock_path_1) == True:
+                    # 파일 읽기
+                    with open(rich_mystock_path_1, "r", encoding='utf-8-sig') as file:
+                        rich_mystock_read_1 = file.read()
+                        self.my_stock_all_buy_money.setText(str(rich_mystock_read_1))
+                        self.my_stock_all_buy_money.repaint()
+                if os.path.isfile(rich_mystock_path_2) == True:
+                    # 파일 읽기
+                    with open(rich_mystock_path_2, "r", encoding='utf-8-sig') as file:
+                        rich_mystock_read_2 = file.read()
+                        self.my_stock_all_rate.setText(str(rich_mystock_read_2))
+                        self.my_stock_all_rate.repaint()
 
-            # self.tableWidget.setColumnWidth(0, 50)
-            # self.tableWidget.setColumnWidth(1, 40)
-            # self.tableWidget.setColumnWidth(2, 200)
-            # self.tableWidget.setColumnWidth(3, 100)
-            # self.tableWidget.setColumnWidth(4, 50)
-            # self.tableWidget.setColumnWidth(5, 40)
-            # self.tableWidget.setColumnWidth(6, 200)
-            # self.tableWidget.setColumnWidth(7, 100)
 
-            for i in range(len(mycla_schedule)):
-                result = str(mycla_schedule[i]).split(":")
-                for j in range(len(result)):
-                    self.tableWidget.setItem(i, j, QTableWidgetItem())
-                    self.tableWidget.item(i, j).setText(str(result[j]))
-                    self.tableWidget.item(i, j).setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-            # time.sleep(0.2)
-            self.tableWidget.clear
+                for row, (code, info) in enumerate(lines.items()):
+                    self.tableWidget.insertRow(row)
+                    self.tableWidget.setItem(row, 0, QTableWidgetItem(info.get('종목명', '')))
+                    self.tableWidget.setItem(row, 1, QTableWidgetItem(code))
+
+                    item_refresh = QTableWidgetItem()
+                    item_refresh.setData(Qt.DisplayRole, int(info.get('보유수량', 0))) # 숫자로 설정 (정렬을 위해)
+                    self.tableWidget.setItem(row, 2, item_refresh)
+
+                    item_refresh = QTableWidgetItem()
+                    item_refresh.setData(Qt.DisplayRole, int(info.get('매입금액', 0)))  # 숫자로 설정 (정렬을 위해)
+                    self.tableWidget.setItem(row, 3, item_refresh)
+
+                    item_refresh = QTableWidgetItem()
+                    item_refresh.setData(Qt.DisplayRole, int(info.get('매입가', 0)))  # 숫자로 설정 (정렬을 위해)
+                    self.tableWidget.setItem(row, 4, item_refresh)
+
+                    item_refresh = QTableWidgetItem()
+                    item_refresh.setData(Qt.DisplayRole, int(info.get('현재가', 0)))  # 숫자로 설정 (정렬을 위해)
+                    self.tableWidget.setItem(row, 5, item_refresh)
+
+                    item_refresh = QTableWidgetItem()
+                    item_refresh.setData(Qt.DisplayRole, float(info.get('수익률(%)', 0)))  # 숫자로 설정 (정렬을 위해)
+                    self.tableWidget.setItem(row, 6, item_refresh)
+
+                # 제목 셀에 진한 글씨체 적용
+                header_font = QFont()
+                header_font.setBold(True)
+                for i in range(self.tableWidget.columnCount()):
+                    item = QTableWidgetItem(self.tableWidget.horizontalHeaderItem(i).text())
+                    item.setFont(header_font)
+                    self.tableWidget.setHorizontalHeaderItem(i, item)
+
+                # 값 셀 가운데 정렬
+                for i in range(self.tableWidget.rowCount()):
+                    for j in range(self.tableWidget.columnCount()):
+                        item = self.tableWidget.item(i, j)
+                        if item is not None:
+                            item.setTextAlignment(Qt.AlignCenter)
+                # 수익률이 플러스일 때는 빨간색, 마이너스일 때는 파란색으로 표시
+                for i in range(self.tableWidget.rowCount()):
+                    profit_loss_item = self.tableWidget.item(i, 6)  # 수익률(%) 열에 해당하는 item
+                    if profit_loss_item is not None:
+                        profit_loss = float(profit_loss_item.text().replace('%', ''))
+                        if profit_loss > 0:
+                            profit_loss_item.setForeground(QColor('red'))
+                        elif profit_loss < 0:
+                            profit_loss_item.setForeground(QColor('blue'))
+
+            else:
+                self.tableWidget.setRowCount(1)
+                self.tableWidget.setItem(0, 0, QTableWidgetItem("보유종목이 없습니다."))
+                self.tableWidget.setSpan(0, 0, 1, 7)  # Merge cells for the message
+
 
 
         except Exception as e:
             print(e)
             return 0
+
 
     def set_label(self, row, column):
         global thisRow, thisCol
@@ -2006,34 +1936,34 @@ class FirstTab(QWidget):
 
 
 
-    def mySchedule_is(self):
-        try:
-            ##############다시 코딩
-            dir_path = "C:\\my_games\\" + str(v_.game_folder)
-            file_path = dir_path + "\\mysettings\\myschedule\\schedule.txt"
-            if os.path.isfile(file_path) == True:
-                # 파일 읽기
-                with open(file_path, "r", encoding='utf-8-sig') as file:
-                    lines = file.read()
-
-            remove_ = self.tableWidget.rowCount()
-            print("remove_", remove_)
-            for i in range(remove_ - 1):
-                self.tableWidget.removeRow(0)
-
-            refresh_result = lines.split("\n")
-            rowcount = self.tableWidget.rowCount()
-            print("refresh_rowcount", self.tableWidget.rowCount())
-            count_ = len(refresh_result) - rowcount - 1
-            for i in range(count_):
-                self.tableWidget.insertRow(self.tableWidget.rowCount())
-            print("refresh_rowcount2", self.tableWidget.rowCount())
-            self.tableWidget.clear
-            self.set_rand_int()
-            self.tableWidget.clear
-        except Exception as e:
-            print(e)
-            return 0
+    # def mySchedule_is(self):
+    #     try:
+    #         ##############다시 코딩
+    #         dir_path = "C:\\my_games\\" + str(v_.game_folder)
+    #         file_path = dir_path + "\\mysettings\\myschedule\\schedule.txt"
+    #         if os.path.isfile(file_path) == True:
+    #             # 파일 읽기
+    #             with open(file_path, "r", encoding='utf-8-sig') as file:
+    #                 lines = file.read()
+    #
+    #         remove_ = self.tableWidget.rowCount()
+    #         print("remove_", remove_)
+    #         for i in range(remove_ - 1):
+    #             self.tableWidget.removeRow(0)
+    #
+    #         refresh_result = lines.split("\n")
+    #         rowcount = self.tableWidget.rowCount()
+    #         print("refresh_rowcount", self.tableWidget.rowCount())
+    #         count_ = len(refresh_result) - rowcount - 1
+    #         for i in range(count_):
+    #             self.tableWidget.insertRow(self.tableWidget.rowCount())
+    #         print("refresh_rowcount2", self.tableWidget.rowCount())
+    #         self.tableWidget.clear
+    #         self.set_rand_int()
+    #         self.tableWidget.clear
+    #     except Exception as e:
+    #         print(e)
+    #         return 0
 
     def mySchedule_add(self, data):
         try:
@@ -2054,113 +1984,114 @@ class FirstTab(QWidget):
 
     def mySchedule_change(self, how_, datas):
         try:
-            ishow_ = False
-            dir_path = "C:\\my_games\\" + str(v_.game_folder)
-            file_path = dir_path + "\\mysettings\\myschedule\\schedule.txt"
-            file_path3 = dir_path + "\\mysettings\\myschedule\\schedule2.txt"
-            print(os.path.isfile(file_path))
-            print(os.path.isdir(dir_path))
-
-            if os.path.isdir(dir_path) == True:
-                print('디렉토리 존재')
-            else:
-                os.makedirs(dir_path)
-
-            print("how_", how_)
-            if how_ == "add":
-                with open(file_path, "a", encoding='utf-8-sig') as file:
-                    print("add????", datas)
-                    file.write(datas)
-                    ishow_ = True
-                # reset_schedule_ = ""
-                # with open(file_path, "r", encoding='utf-8-sig') as file:
-                #     lines = file.read().splitlines()
-                #     lines = ' '.join(lines).split()
-                #     print("lineslineslineslineslineslineslineslineslineslineslines", lines)
-                #     for i in range(len(lines)):
-                #         complete_ = lines[i].split(":")
-                #         for j in range(len(complete_)):
-                #             if j < 3:
-                #                 reset_schedule_ += complete_[j] + ":"
-                #             if j == 3:
-                #                 reset_schedule_ += '대기중:'
-                #             if 3 < j < 7:
-                #                 reset_schedule_ += complete_[j] + ":"
-                #             if j == 7:
-                #                 reset_schedule_ += "대기중\n"
-                #     print("reset_schedule_reset_schedule_reset_schedule_reset_schedule_reset_schedule_",
-                #           reset_schedule_)
-                #     with open(file_path3, "w", encoding='utf-8-sig') as file:
-                #         file.write(reset_schedule_)
-                ishow_ = True
-                reset_schedule_ = ""
-                with open(file_path, "r", encoding='utf-8-sig') as file:
-                    lines = file.read().splitlines()
-                    lines = ' '.join(lines).split()
-
-                    isSchedule_ = False
-                    while isSchedule_ is False:
-                        if lines == [] or lines == "":
-                            print("스케쥴이 비었다 : myQuest_play_check")
-                            with open(file_path3, "r", encoding='utf-8-sig') as file:
-                                schedule_ready = file.read()
-                            with open(file_path, "w", encoding='utf-8-sig') as file:
-                                file.write(schedule_ready)
-                            with open(file_path, "r", encoding='utf-8-sig') as file:
-                                lines = file.read().splitlines()
-                        else:
-                            isSchedule_ = True
-
-                    for i in range(len(lines)):
-                        complete_ = lines[i].split(":")
-                        for j in range(len(complete_)):
-                            if j < 3:
-                                reset_schedule_ += complete_[j] + ":"
-                            if j == 3:
-                                reset_schedule_ += '대기중:'
-                            if 3 < j < 7:
-                                reset_schedule_ += complete_[j] + ":"
-                            if j == 7:
-                                reset_schedule_ += "대기중\n"
-
-                    print('reset_schedule_', reset_schedule_)
-                    # with open(file_path, "w", encoding='utf-8-sig') as file:
-                    #     file.write(reset_schedule_)
-                    with open(file_path3, "w", encoding='utf-8-sig') as file:
-                        file.write(reset_schedule_)
-                self.set_rand_int()
-
-            elif how_ == "modify":
-                with open(file_path, "w", encoding='utf-8-sig') as file:
-                    file.write(datas)
-
-                ishow_ = True
-                reset_schedule_ = ""
-                lines = datas
-                lines = lines.split('\n')
-                lines = ' '.join(lines).split()
-
-
-
-                for i in range(len(lines)):
-                    complete_ = lines[i].split(":")
-                    for j in range(len(complete_)):
-                        if j < 3:
-                            reset_schedule_ += complete_[j] + ":"
-                        if j == 3:
-                            reset_schedule_ += '대기중:'
-                        if 3 < j < 7:
-                            reset_schedule_ += complete_[j] + ":"
-                        if j == 7:
-
-                            reset_schedule_ += '대기중\n'
-
-                print('reset_schedule_', reset_schedule_)
-                with open(file_path3, "w", encoding='utf-8-sig') as file:
-                    file.write(reset_schedule_)
-                self.set_rand_int()
-
-            return ishow_
+            print("mySchedule_change")
+            # ishow_ = False
+            # dir_path = "C:\\my_games\\" + str(v_.game_folder)
+            # file_path = dir_path + "\\mysettings\\myschedule\\schedule.txt"
+            # file_path3 = dir_path + "\\mysettings\\myschedule\\schedule2.txt"
+            # print(os.path.isfile(file_path))
+            # print(os.path.isdir(dir_path))
+            #
+            # if os.path.isdir(dir_path) == True:
+            #     print('디렉토리 존재')
+            # else:
+            #     os.makedirs(dir_path)
+            #
+            # print("how_", how_)
+            # if how_ == "add":
+            #     with open(file_path, "a", encoding='utf-8-sig') as file:
+            #         print("add????", datas)
+            #         file.write(datas)
+            #         ishow_ = True
+            #     # reset_schedule_ = ""
+            #     # with open(file_path, "r", encoding='utf-8-sig') as file:
+            #     #     lines = file.read().splitlines()
+            #     #     lines = ' '.join(lines).split()
+            #     #     print("lineslineslineslineslineslineslineslineslineslineslines", lines)
+            #     #     for i in range(len(lines)):
+            #     #         complete_ = lines[i].split(":")
+            #     #         for j in range(len(complete_)):
+            #     #             if j < 3:
+            #     #                 reset_schedule_ += complete_[j] + ":"
+            #     #             if j == 3:
+            #     #                 reset_schedule_ += '대기중:'
+            #     #             if 3 < j < 7:
+            #     #                 reset_schedule_ += complete_[j] + ":"
+            #     #             if j == 7:
+            #     #                 reset_schedule_ += "대기중\n"
+            #     #     print("reset_schedule_reset_schedule_reset_schedule_reset_schedule_reset_schedule_",
+            #     #           reset_schedule_)
+            #     #     with open(file_path3, "w", encoding='utf-8-sig') as file:
+            #     #         file.write(reset_schedule_)
+            #     ishow_ = True
+            #     reset_schedule_ = ""
+            #     with open(file_path, "r", encoding='utf-8-sig') as file:
+            #         lines = file.read().splitlines()
+            #         lines = ' '.join(lines).split()
+            #
+            #         isSchedule_ = False
+            #         while isSchedule_ is False:
+            #             if lines == [] or lines == "":
+            #                 print("스케쥴이 비었다 : myQuest_play_check")
+            #                 with open(file_path3, "r", encoding='utf-8-sig') as file:
+            #                     schedule_ready = file.read()
+            #                 with open(file_path, "w", encoding='utf-8-sig') as file:
+            #                     file.write(schedule_ready)
+            #                 with open(file_path, "r", encoding='utf-8-sig') as file:
+            #                     lines = file.read().splitlines()
+            #             else:
+            #                 isSchedule_ = True
+            #
+            #         for i in range(len(lines)):
+            #             complete_ = lines[i].split(":")
+            #             for j in range(len(complete_)):
+            #                 if j < 3:
+            #                     reset_schedule_ += complete_[j] + ":"
+            #                 if j == 3:
+            #                     reset_schedule_ += '대기중:'
+            #                 if 3 < j < 7:
+            #                     reset_schedule_ += complete_[j] + ":"
+            #                 if j == 7:
+            #                     reset_schedule_ += "대기중\n"
+            #
+            #         print('reset_schedule_', reset_schedule_)
+            #         # with open(file_path, "w", encoding='utf-8-sig') as file:
+            #         #     file.write(reset_schedule_)
+            #         with open(file_path3, "w", encoding='utf-8-sig') as file:
+            #             file.write(reset_schedule_)
+            #     self.set_rand_int()
+            #
+            # elif how_ == "modify":
+            #     with open(file_path, "w", encoding='utf-8-sig') as file:
+            #         file.write(datas)
+            #
+            #     # ishow_ = True
+            #     # reset_schedule_ = ""
+            #     # lines = datas
+            #     # lines = lines.split('\n')
+            #     # lines = ' '.join(lines).split()
+            #     #
+            #     #
+            #     #
+            #     # for i in range(len(lines)):
+            #     #     complete_ = lines[i].split(":")
+            #     #     for j in range(len(complete_)):
+            #     #         if j < 3:
+            #     #             reset_schedule_ += complete_[j] + ":"
+            #     #         if j == 3:
+            #     #             reset_schedule_ += '대기중:'
+            #     #         if 3 < j < 7:
+            #     #             reset_schedule_ += complete_[j] + ":"
+            #     #         if j == 7:
+            #     #
+            #     #             reset_schedule_ += '대기중\n'
+            #     #
+            #     # print('reset_schedule_', reset_schedule_)
+            #     # with open(file_path3, "w", encoding='utf-8-sig') as file:
+            #     #     file.write(reset_schedule_)
+            #     self.set_rand_int()
+            #
+            # return ishow_
         except Exception as e:
             print(e)
             return 0
@@ -2177,10 +2108,20 @@ class FirstTab(QWidget):
             result_game = game_start()
             print("start?????????", result_game)
             if result_game == True:
-                self.sche_add1.setText("부자 되는 중")
-                self.sche_add1.setDisabled(True)
+                self.rich_start1()
 
-                self.kiwoom = Kiwoom()
+            else:
+
+                reply = QMessageBox.question(self, '주투홀', '시잘할까요?',
+                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                print("reply", reply)
+
+                # 16384 => yes, 65536 => no
+
+                if reply == QMessageBox.Yes:
+                    print("yes", reply)
+                else:
+                    print("no", reply)
 
         except Exception as e:
             print(e)
@@ -2195,15 +2136,122 @@ class FirstTab(QWidget):
             dir_path = "C:\\my_games\\load\\" + str(v_.game_folder)
             file_path = dir_path + "\\start.txt"
 
+            rich_dir_path = "C:\\my_games\\" + str(v_.game_folder)
+            rich_file_path = rich_dir_path + "\\mysettings\\myschedule\\schedule.txt"
+
+            rich_mystock_path_1 = rich_dir_path + "\\mysettings\\myschedule\\result_kiwoom_data_1.txt"
+            rich_mystock_path_2 = rich_dir_path + "\\mysettings\\myschedule\\result_kiwoom_data_2.txt"
+
             with open(file_path, "w", encoding='utf-8-sig') as file:
                 data = 'yes'
                 file.write(str(data))
 
             self.kiwoom = Kiwoom()
+            self.kiwoom.get_kiwoom_ready()
+            print("준비끝")
 
-            # app = QApplication(sys.argv)
+            # code = "200670"
             #
-            # app.exec_()
+            # self.kiwoom.minute_kiwoom_db(code=code, tic=10)
+            #
+            # average_price = self.kiwoom.result_minute_kiwoom_db()
+            # if code in average_price.keys():
+            #     print("존재한다!!!!!!!!10분 240 평균값:", average_price)
+            #     print("존재한다!!!!!!!!10분 240 평균값:", average_price[code]["d_day_0_240"])
+            #
+            # else:
+            #     print("존재하지 않는다!!!!!!!!!!!!!!!", average_price)
+
+
+
+            moohanloop = True
+            moohanloop_count = 0
+            while moohanloop is True:
+                moohanloop_count += 1
+
+                now = datetime.datetime.now()
+                now_time_HMS = now.strftime("%H%M%S")
+
+
+                if moohanloop_count == 1:
+                    print("주식 매매 중...", moohanloop_count, now_time_HMS)
+                    result_kiwoom = self.kiwoom.get_kiwoom_start()
+                    print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
+
+                    with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
+                        result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
+                        file.write(str(result_kiwoom_data_1))
+                    with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
+                        result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
+                        file.write(str(result_kiwoom_data_2))
+
+
+                    with open(rich_file_path, "w", encoding='utf-8-sig') as file:
+                        json.dump(result_kiwoom[0], file)
+                    self.set_rand_int()
+
+                elif moohanloop_count == 2:
+                    print("주식 매매 중...", moohanloop_count, now_time_HMS)
+                    result_kiwoom = self.kiwoom.get_kiwoom_start()
+                    print("result_kiwoom, 횟수", moohanloop_count, result_kiwoom)
+
+                    with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
+                        result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
+                        file.write(str(result_kiwoom_data_1))
+                    with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
+                        result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
+                        file.write(str(result_kiwoom_data_2))
+
+                    with open(rich_file_path, "w", encoding='utf-8-sig') as file:
+                        json.dump(result_kiwoom[0], file)
+                    self.set_rand_int()
+
+                elif (moohanloop_count % 50) == 0:
+                    print("주식 매매 중...", moohanloop_count, now_time_HMS)
+                    result_kiwoom = self.kiwoom.get_kiwoom_start()
+                    print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
+
+                    with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
+                        result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
+                        file.write(str(result_kiwoom_data_1))
+                    with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
+                        result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
+                        file.write(str(result_kiwoom_data_2))
+
+                    with open(rich_file_path, "w", encoding='utf-8-sig') as file:
+                        json.dump(result_kiwoom[0], file)
+                    self.set_rand_int()
+
+                if moohanloop_count != 1:
+                    QTest.qWait(5000)
+                else:
+                    QTest.qWait(1000)
+                QTest.qWait(100)
+#######################################################
+                # if 90000 < int(now_time_HMS) < 153000:
+                #     if moohanloop_count == 1:
+                #         result_kiwoom = self.kiwoom.get_kiwoom_start()
+                #         print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
+                #     if (moohanloop_count % 50) == 0:
+                #         result_kiwoom = self.kiwoom.get_kiwoom_start()
+                #         print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
+                #
+                #
+                # else:
+                #     print("아직 시간 안됐다...", now_time_HMS)
+                #
+                #     for t in range(500):
+                #         now = datetime.datetime.now()
+                #         now_time_HMS = now.strftime("%H%M%S")
+                #
+                #         if 89000 < int(now_time_HMS) < 153000:
+                #             break
+                #         QTest.qWait(500)
+                #     QTest.qWait(5000)
+
+
+
+                # QTest.qWait(100)
 
         except Exception as e:
             print(e)
@@ -2269,18 +2317,7 @@ class Test_check(QThread):
         print("여긴 테스트 모드(ver " + version + ")")
         # 매수중인 종목
 
-        tester = FirstTab()
-
-        for i in range(5):
-            time_test_result_ = go_test()
-
-            print("time_test_result_", time_test_result_)
-
-
-
-            tester.onActivated_test(time_test_result_)
-
-            time.sleep(5)
+        #
 
 
 

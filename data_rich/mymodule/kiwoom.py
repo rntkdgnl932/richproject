@@ -10,6 +10,7 @@ from PyQt5.QtTest import *
 # kiwoom = Kiwoom()
 
 import datetime
+# import FinanceDataReader as fdr
 
 
 import sys
@@ -35,6 +36,13 @@ class Kiwoom(QAxWidget):
         print("키움 메서드", __name__)
 
 
+        # self.get_kiwoom_ready()채
+
+        #######################################
+
+
+    # 최초 초기화 부분
+    def get_kiwoom_ready(self):
         self.realType = RealType()
 
         ####### event loop
@@ -46,16 +54,21 @@ class Kiwoom(QAxWidget):
         self.screen_hoga_info = "10000"
         self.screen_my_info = "2000"
         self.screen_calculation_stock = "4000"
-        self.screen_real_stock = "5000" # 종목별로 할당할 스크린 번호
-        self.screen_meme_stock = "6000" # 종목별 할당할 주문용 스크린 번호
+        self.screen_real_stock = "5000"  # 종목별로 할당할 스크린 번호
+        self.screen_meme_stock = "6000"  # 종목별 할당할 주문용 스크린 번호
         self.screen_start_stop_real = "1000"
         self.screen_scan = "9000"
         #######변수모음
-        self.account_num = None # 계좌번호
+        self.account_num = None  # 계좌번호
 
         ######### 계좌 관련 변수
         self.use_money = 0
         self.use_money_percent = 0.5
+
+        # 총 매입금액 및 총 수익
+        self.total_buy_money_result = 0
+        self.total_profit_loss_rate_result = 0
+
         self.buy_money = int(v_.one_mesoo_price)
         self.sell_money = int(v_.two_medo_price)
         print("self.buy_money, self.sell_money", self.buy_money, self.sell_money)
@@ -66,8 +79,11 @@ class Kiwoom(QAxWidget):
         self.not_account2_stock_dict = {}
         self.jango_dict = {}
 
+        self.return_stock_dict = {}
+
         ####### 종목 분석용
         self.calcul_data = []
+        self.result_minute_aver = {}
 
         ######### 조건 검색식 전용
         self.scan_list = []
@@ -79,33 +95,36 @@ class Kiwoom(QAxWidget):
         # 실시간
         self.last_scan_time = 0
         self.scan_delay = 61
-
+        # 세금
+        # 매수매도세금
+        # 실제 세금
+        # self.meme_tax_price = 0.00015
+        # 모의투자 세금
+        self.meme_tax_price = 0.0035
+        self.stock_tax_price = 0.0023
 
         #######로그인
         self.get_ocx_instance()
         self.event_slots()
 
-
         ##### 실시간
         self.real_event_slots()
         # 1은 tr, 2는 실시간
         self.data_type = 1
+        self.started = 0
 
         ##### 매수 매도 중...
         self.buy_ing = []
         self.sell_ing = []
 
-
         # 로그인 관련
         self.signal_login_commConnect()
-
-
 
         ######계좌정보 가져오기
         self.get_account_info()
         self.detail_account_info()  # 예수금
-        self.detail_account_mystock()   # 통장 내역(수익률 등 볼수 있음)
-        self.not_concluded_account()    # 미체결 요청
+        self.detail_account_mystock()  # 통장 내역(수익률 등 볼수 있음)
+        self.not_concluded_account()  # 미체결 요청
 
         ########## 장시작 구분
         self.dynamicCall("SetRealReg(QString, QString, QString, QString)", self.screen_start_stop_real, '',
@@ -122,21 +141,67 @@ class Kiwoom(QAxWidget):
         # TR 1000건 이하 - time.sleep(1.8)을 추가하여 진행가능
         # TR 1000건 초과 - 1시간 1000건 제약으로 time.sleep(3.6)을 추가하여 진행가능
 
-        # tr 1, 실시간 2
-        self.stock_start(self.data_type)
-
+        # # tr 1, 실시간 2
+        # self.stock_start(self.data_type)
 
         ###############test 테스트$$$$$$$$$$$$$
 
         # 20일 이동평균선 계산
         # self.calculate_moving_average("035720", 20)
 
+    # 실시간 스타트
+    def get_kiwoom_start(self):
+        # tr 1, 실시간 2
+        if self.data_type == 1:
+            self.started += 1
+            print("tr 타입")
+            ### 1번 Tr
 
-        #######################################
 
+            if self.started != 1:
+                # 횟수제한
+                self.wait_for_request_delay()
+                self.detail_account_mystock()  # 총 매입금액, 총 수익
+                self.last_request_time = time.time()
 
+                result = len(self.portfolio_stock_dict)
+                print("갱신전 관리 종목 갯수", result)
 
-   # 로그인 부분
+                self.read_code()  # 저장된 종목들 불러온다.
+                self.screen_number_setting()  # 스크린 번호를 할당
+
+                my_port_many = 0
+                for code in self.portfolio_stock_dict.keys():
+                    my_port_many += 1
+
+                    # 10분봉 240 평균 구하기 결과는 ... result_minute_kiwoom_db 으로 리턴...
+                    self.minute_kiwoom_db(code=code, tic=10)
+
+                    self.getItemInfo(code)
+                    QTest.qWait(300)
+
+                print("내 종목 관리 갯수 : ", my_port_many)
+
+        else:
+            print("타입?", self.data_type)
+
+        # self.jango_dict, self.account_stock_dict
+
+        if len(self.account_stock_dict) > 0:
+            # self.account_stock_dict의 모든 키와 값을 self.return_stock_dict에 추가
+            for key, value in self.account_stock_dict.items():
+                if key not in self.return_stock_dict:
+                    self.return_stock_dict[key] = value
+        if len(self.jango_dict) > 0:
+            # self.jango_dict의 모든 키와 값을 self.return_stock_dict에 추가
+            for key, value in self.jango_dict.items():
+                if key not in self.return_stock_dict:
+                    self.return_stock_dict[key] = value
+        # if sCode in self.account_stock_dict.keys()
+
+        return self.return_stock_dict, self.total_buy_money_result, self.total_profit_loss_rate_result
+
+    # 로그인 부분
     def get_ocx_instance(self):
         self.setControl("KHOPENAPI.KHOpenAPICtrl.1")
 
@@ -238,14 +303,14 @@ class Kiwoom(QAxWidget):
 
         elif sRQName == "계좌평가잔고내역요청":
             total_buy_money = self.dynamicCall("GetCommData(String, String, int, String)", sTrCode, sRQName, 0, "총매입금액")
-            total_buy_money_result = int(total_buy_money)
+            self.total_buy_money_result = int(total_buy_money)
 
 
-            print("총매입금액", total_buy_money_result)
+            print("총매입금액", self.total_buy_money_result)
 
             total_profit_loss_rate = self.dynamicCall("GetCommData(String, String, int, String)", sTrCode, sRQName, 0, "총수익률(%)")
-            total_profit_loss_rate_result = float(total_profit_loss_rate)
-            print("총수익률(%)", total_profit_loss_rate_result)
+            self.total_profit_loss_rate_result = float(total_profit_loss_rate)
+            print("총수익률(%)", self.total_profit_loss_rate_result)
 
             rows = self.dynamicCall("GetRepeatCnt(QString, QString)", sTrCode, sRQName)
 
@@ -454,11 +519,18 @@ class Kiwoom(QAxWidget):
                     else:
                         first_meme_price = asd['매매가능수량']
 
-                    meme_tax = (asd['매입가'] * asd['매매가능수량'] * 0.00015) + (b * asd['매매가능수량'] * 0.00015) + (
-                                b * asd['매매가능수량'] * 0.002)
+                    medo = b * asd['매매가능수량']
+                    mesoo = asd['매입가'] * asd['매매가능수량']
 
-                    meme_rate = (b - asd['매입가'] - meme_tax) / asd['매입가'] * 100
+                    meme_tax = (mesoo * self.meme_tax_price) + (medo * self.meme_tax_price) + (medo * self.stock_tax_price)
+
+
+
+                    meme_rate = (medo - mesoo - meme_tax) / mesoo * 100
                     # meme_rate = (b / asd['매입가']) * 100 - 100
+
+
+                    print("매도 매수 세금 수익률", medo, mesoo, meme_tax, meme_rate)
 
                     # 2차 매도인지 여부
                     second_meme = False
@@ -541,10 +613,11 @@ class Kiwoom(QAxWidget):
                                     wa.clear()
                                     pass
                                 else:
-                                    print("%s %s" % ("마지막 신규매도를 한다_1_2", sCode))
+                                    print("%s %s" % ("7% 마지막 신규매도를 한다_1_2", sCode))
 
                                     # 횟수 제한 딜레이
                                     self.wait_for_request_delay()
+                                    # self.last_request_time = time.time()
 
                                     order_success = self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)", ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode, asd['매매가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
 
@@ -561,6 +634,45 @@ class Kiwoom(QAxWidget):
 
                                     else:
                                         print("매도주문 전달 실패")
+                            else:
+                                average_price = self.result_minute_kiwoom_db()
+                                print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                # {'200670': {'d_day_0_240': 29489.375, 'd_day_1_240': 29477.083333333332, 'd_day_2_240': 29465.0}}
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b):
+
+                                    wa = []
+                                    wa.append(sCode)
+
+                                    if len(wa) > 1:
+                                        wa.clear()
+                                        pass
+                                    else:
+                                        print("%s %s" % ("10분봉 240 마지막 신규매도를 한다_1_2", sCode))
+
+                                        # 횟수 제한 딜레이
+                                        self.wait_for_request_delay()
+
+                                        order_success = self.dynamicCall(
+                                            "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                            ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2,
+                                             sCode, asd['매매가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                        self.last_request_time = time.time()
+
+                                        if order_success == 0:
+                                            print("매도주문 전달 성공", meme_rate)
+
+                                            if sCode not in self.sell_ing:
+                                                self.sell_ing.append(sCode)
+
+                                            if sCode in self.account_stock_dict.keys():
+                                                del self.account_stock_dict[sCode]
+
+                                        else:
+                                            print("매도주문 전달 실패")
+
+
                     QTest.qWait(1000)
 
 
@@ -576,11 +688,15 @@ class Kiwoom(QAxWidget):
                     else:
                         first_meme_price = jd['주문가능수량']
 
+                    medo = b * jd['주문가능수량']
+                    mesoo = jd['매입단가'] * jd['주문가능수량']
 
-                    meme_tax = (jd['매입단가'] * jd['주문가능수량'] * 0.00015) + (b * jd['주문가능수량'] * 0.00015) + (b * jd['주문가능수량'] * 0.002)
+                    meme_tax = (mesoo * self.meme_tax_price) + (medo * self.meme_tax_price) + (medo * self.stock_tax_price)
 
-                    meme_rate = (b - jd['매입단가'] - meme_tax) / jd['매입단가'] * 100
+                    meme_rate = (medo - mesoo - meme_tax) / mesoo * 100
                     # meme_rate = (b / jd['매입단가']) * 100 - 100
+
+                    print("매도 매수 세금 수익률", medo, mesoo, meme_tax, meme_rate)
 
                     code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
 
@@ -661,7 +777,7 @@ class Kiwoom(QAxWidget):
                                     wa.clear()
                                     pass
                                 else:
-                                    print("%s %s" % ("마지막 신규매도를 한다_2_2", sCode))
+                                    print("%s %s" % ("7% 마지막 신규매도를 한다_2_2", sCode))
 
                                     # 횟수 제한 딜레이
                                     self.wait_for_request_delay()
@@ -684,13 +800,50 @@ class Kiwoom(QAxWidget):
 
                                     else:
                                         print("매도주문 전달 실패")
+                            else:
+                                average_price = self.result_minute_kiwoom_db()
+                                print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                # {'200670': {'d_day_0_240': 29489.375, 'd_day_1_240': 29477.083333333332, 'd_day_2_240': 29465.0}}
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b):
+                                    wa = []
+                                    wa.append(sCode)
+
+                                    if len(wa) > 1:
+                                        wa.clear()
+                                        pass
+                                    else:
+                                        print("%s %s" % ("10분봉 240 마지막 신규매도를 한다_2_2", sCode))
+
+                                        # 횟수 제한 딜레이
+                                        self.wait_for_request_delay()
+
+                                        order_success = self.dynamicCall(
+                                            "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                            ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2,
+                                             sCode,
+                                             jd['주문가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                        self.last_request_time = time.time()
+
+                                        if order_success == 0:
+                                            print("매도주문 전달 성공", meme_rate)
+                                            if sCode not in self.sell_ing:
+                                                self.sell_ing.append(sCode)
+
+                                            if sCode in self.account_stock_dict.keys():
+                                                del self.account_stock_dict[sCode]
+
+                                        else:
+                                            print("매도주문 전달 실패")
+
                     QTest.qWait(1000)
 
                 # 등락율이 1.0 % 이상이고 오늘 산 잔고에 없을 경우
 
                 # if sCode not in self.jango_dict.keys():
 
-                elif d > 1.0:
+                elif 0 < d < 4:
 
                     if sCode not in self.jango_dict:
 
@@ -875,8 +1028,111 @@ class Kiwoom(QAxWidget):
                 ###################################
 
                 self.detail_account_info_event_loop.exit()
+        #### 주식분봉차트조회
+        if "주식분봉차트조회" == sRQName:
+            print("분봉데이터 요청 ")
+            code = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "종목코드")
+            code = code.strip()
+            print("%s 분봉데이터 요청" % code)
+
+            cnt = self.dynamicCall("GetRepeatCnt(QString, QString)", sTrCode, sRQName)
+            print("데이터 분봉수 %s" % cnt)
+
+            # 한번 조회하면 600일치까지 일봉데이터를 받을 수 있다.
+            for i in range(cnt):
+                data = []
+
+                current_price = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "현재가")
+                value = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "거래량")
+                start_price = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "시가")
+                high_price = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "고가")
+                low_price = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "저가")
+
+                data.append("")
+                data.append(current_price.strip().lstrip('+').lstrip('-'))  #.lstrip('+').lstrip('-')
+                data.append(value.strip())
+                data.append(start_price.strip().lstrip('+').lstrip('-'))
+                data.append(high_price.strip().lstrip('+').lstrip('-'))
+                data.append(low_price.strip().lstrip('+').lstrip('-'))
+                data.append("")
+
+                self.calcul_data.append(data.copy())
+
+            if sPrevNext == "2" and cnt < 242:
+                self.minute_kiwoom_db(code=code, sPrevNext=sPrevNext)
+            else:
+
+                print("총 분봉수 %s" % len(self.calcul_data))
+
+                self.result_minute_aver = {}
+
+                pass_success = False
+
+                # 240일 이평선을 그릴 만큼의 데이터가 있는지 체크
+                if self.calcul_data == None or len(self.calcul_data) < 240:
+                    pass_success = False
+                else:
+                    # 240개 이상 되면은...
+                    pass_success = True
+
+                    if code in self.result_minute_aver:
+                        pass
+                    else:
+                        # self.result_minute_aver({code: {}})
+                        self.result_minute_aver[code] = {}
+                        print("self.result_minute_aver", self.result_minute_aver)
+
+                    print("self.calcul_data", self.calcul_data)
+
+                    total_price = 0
+                    for value in self.calcul_data[:240]:
+
+                        total_price += int(value[1])
+                        # print("int(value[1]", int(value[1]))
+                        # print("total_price", total_price)
+
+                    moving_average_price = total_price / 240
+                    print("moving_average_price1", moving_average_price)
+                    self.result_minute_aver[code].update({"d_day_0_240": moving_average_price})
+                    #
+                    total_price = 0
+                    for value in self.calcul_data[1:241]:
+
+                        total_price += int(value[1])
+
+                    moving_average_price = total_price / 240
+                    self.result_minute_aver[code].update({"d_day_1_240": moving_average_price})
+                    print("moving_average_price2", moving_average_price)
+
+                    total_price = 0
+                    for value in self.calcul_data[2:242]:
+                        total_price += int(value[1])
+
+                    moving_average_price = total_price / 240
+                    self.result_minute_aver[code].update({"d_day_2_240": moving_average_price})
+                    print("moving_average_price3", moving_average_price)
+
+                    # print("moving_average_price 이건 모냐?", moving_average_price)
+                    # print("moving_average_price 이건 모냐?", self.calcul_data[:240])
+
+
+
+                if pass_success == True:
+                    print("조건부 통과됨")
+                    # {'200670': {'d_day_0_240': 29489.375, 'd_day_1_240': 29477.083333333332, 'd_day_2_240': 29465.0}}
+
+                elif pass_success == False:
+                    print("조건부 통과 못함")
+
+                # 10분봉
+                self.last_request_time = time.time()
+
+                self.calcul_data.clear()
+                self.calculator_event_loop.exit()
 
         ######## 여긴 필요 없음....
+
+
         if "주식일봉차트조회" == sRQName:
             print("일봉데이터 요청 ")
             code = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "종목코드")
@@ -1043,6 +1299,30 @@ class Kiwoom(QAxWidget):
         self.dynamicCall("CommRqData(QString, QString, int, QString)", "주식일봉차트조회", "opt10081", sPrevNext, self.screen_calculation_stock) # Tr서버로 전송 -Transaction
 
         self.calculator_event_loop.exec_()
+
+    def minute_kiwoom_db(self, code=None, tic=None, sPrevNext="0"):
+        # 분봉 조회
+        self.dynamicCall("DisconnectRealData(QString)", self.screen_calculation_stock)
+
+        self.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
+        if tic != None:
+            self.dynamicCall("SetInputValue(QString, QString)", "틱범위", tic)
+        self.dynamicCall("SetInputValue(QString, QString)", "수정주가구분", "1")
+        # 횟수 제한 딜레이
+        self.wait_for_request_delay()
+
+        self.dynamicCall("CommRqData(QString, QString, int, QString)", "주식분봉차트조회", "opt10080", sPrevNext,
+                         self.screen_calculation_stock)  # Tr서버로 전송 -Transaction
+
+        self.calculator_event_loop.exec_()
+
+    def result_minute_kiwoom_db(self):
+        # 분봉 조회
+        return self.result_minute_aver
+
+
+
+
 
     ############종목 분석 여기까지###########
 
@@ -1282,7 +1562,7 @@ class Kiwoom(QAxWidget):
 
                 self.dynamicCall("SetRealRemove(String, String)", ["ALL", "ALL"])
 
-                self.stock_start(2)
+                self.real_stock_start(2)
 
             else:
 
@@ -1299,11 +1579,15 @@ class Kiwoom(QAxWidget):
                     else:
                         first_meme_price = asd['매매가능수량']
 
-                    meme_tax = (asd['매입가'] * asd['매매가능수량'] * 0.00015) + (b * asd['매매가능수량'] * 0.00015) + (
-                            b * asd['매매가능수량'] * 0.002)
+                    medo = b * asd['매매가능수량']
+                    mesoo = asd['매입가'] * asd['매매가능수량']
 
-                    meme_rate = (b - asd['매입가'] - meme_tax) / asd['매입가'] * 100
+                    meme_tax = (mesoo * self.meme_tax_price) + (medo * self.meme_tax_price) + (medo * self.stock_tax_price)
+
+                    meme_rate = (medo - mesoo - meme_tax) / mesoo * 100
                     # meme_rate = (b / asd['매입가']) * 100 - 100
+
+                    print("매도 매수 세금 수익률", medo, mesoo, meme_tax, meme_rate)
 
                     # 2차 매도인지 여부
                     second_meme = False
@@ -1389,7 +1673,7 @@ class Kiwoom(QAxWidget):
                                     wa.clear()
                                     pass
                                 else:
-                                    print("%s %s" % ("마지막 신규매도를 한다_1_2", sCode))
+                                    print("%s %s" % ("7% 마지막 신규매도를 한다_1_2", sCode))
 
                                     # 횟수 제한 딜레이
                                     self.wait_for_request_delay()
@@ -1412,6 +1696,43 @@ class Kiwoom(QAxWidget):
 
                                     else:
                                         print("매도주문 전달 실패")
+                            else:
+                                average_price = self.result_minute_kiwoom_db()
+                                print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                # {'200670': {'d_day_0_240': 29489.375, 'd_day_1_240': 29477.083333333332, 'd_day_2_240': 29465.0}}
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b):
+                                    wa = []
+                                    wa.append(sCode)
+
+                                    if len(wa) > 1:
+                                        wa.clear()
+                                        pass
+                                    else:
+                                        print("%s %s" % ("10분봉 240 마지막 신규매도를 한다_2_2", sCode))
+
+                                        # 횟수 제한 딜레이
+                                        self.wait_for_request_delay()
+
+                                        order_success = self.dynamicCall(
+                                            "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                            ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2,
+                                             sCode,
+                                             asd['매매가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                        self.last_request_time = time.time()
+
+                                        if order_success == 0:
+                                            print("매도주문 전달 성공", meme_rate)
+                                            if sCode not in self.sell_ing:
+                                                self.sell_ing.append(sCode)
+
+                                            if sCode in self.account_stock_dict.keys():
+                                                del self.account_stock_dict[sCode]
+
+                                        else:
+                                            print("매도주문 전달 실패")
+
 
                     ##################
                 # 오늘 산 잔고에 있을 경우
@@ -1425,11 +1746,17 @@ class Kiwoom(QAxWidget):
                     else:
                         first_meme_price = jd['주문가능수량']
 
-                    meme_tax = (jd['매입단가'] * jd['주문가능수량'] * 0.00015) + (b * jd['주문가능수량'] * 0.00015) + (
-                                b * jd['주문가능수량'] * 0.002)
+                    medo = b * jd['주문가능수량']
+                    mesoo = jd['매입단가'] * jd['주문가능수량']
 
-                    meme_rate = (b - jd['매입단가'] - meme_tax) / jd['매입단가'] * 100
+                    meme_tax = (mesoo * self.meme_tax_price) + (medo * self.meme_tax_price) + (medo * self.stock_tax_price)
+
+
+
+                    meme_rate = (medo - mesoo - meme_tax) / mesoo * 100
                     # meme_rate = (b / jd['매입단가']) * 100 - 100
+
+                    print("매도 매수 세금 수익률", medo, mesoo, meme_tax, meme_rate)
 
                     code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
 
@@ -1512,7 +1839,7 @@ class Kiwoom(QAxWidget):
                                     wa.clear()
                                     pass
                                 else:
-                                    print("%s %s" % ("마지막 신규매도를 한다_2_2", sCode))
+                                    print("%s %s" % ("7% 마지막 신규매도를 한다_2_2", sCode))
 
                                     # 횟수 제한 딜레이
                                     self.wait_for_request_delay()
@@ -1534,7 +1861,42 @@ class Kiwoom(QAxWidget):
 
                                     else:
                                         print("매도주문 전달 실패")
+                            else:
+                                average_price = self.result_minute_kiwoom_db()
+                                print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                # {'200670': {'d_day_0_240': 29489.375, 'd_day_1_240': 29477.083333333332, 'd_day_2_240': 29465.0}}
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b):
+                                    wa = []
+                                    wa.append(sCode)
 
+                                    if len(wa) > 1:
+                                        wa.clear()
+                                        pass
+                                    else:
+                                        print("%s %s" % ("10분봉 240 마지막 신규매도를 한다_2_2", sCode))
+
+                                        # 횟수 제한 딜레이
+                                        self.wait_for_request_delay()
+
+                                        order_success = self.dynamicCall(
+                                            "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                            ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2,
+                                             sCode,
+                                             jd['주문가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                        self.last_request_time = time.time()
+
+                                        if order_success == 0:
+                                            print("매도주문 전달 성공", meme_rate)
+                                            if sCode not in self.sell_ing:
+                                                self.sell_ing.append(sCode)
+
+                                            if sCode in self.account_stock_dict.keys():
+                                                del self.account_stock_dict[sCode]
+
+                                        else:
+                                            print("매도주문 전달 실패")
                 # 등락율이 1.0 % 이상이고 오늘 산 잔고에 없을 경우
 
                 # if sCode not in self.jango_dict.keys():
@@ -2081,9 +2443,8 @@ class Kiwoom(QAxWidget):
     def send_condition(self, name, index):
         self.dynamicCall("SendCondition(QString, QString, int, int)", self.screen_scan, name, index, 1)
         # self.SendCondition(self.screen_scan, name, index, 1)
-
         self.detail_account_info_event_loop.exec_()
-
+        # 최종 추출된 종목들
     ###가격 가져오기
 
     def getItemInfo(self, new_code):
@@ -2147,6 +2508,46 @@ class Kiwoom(QAxWidget):
         except Exception as e:
             print(e)
 
+    def calculate_moving_price(self, code):
+
+        import requests
+        import pandas as pd
+        from ast import literal_eval
+        from datetime import datetime, timedelta
+
+        # import pandas_datareader.data as web
+
+        try:
+
+            print("최근 3일간 저가 가격")
+            # 네이버 금융 API를 통해 데이터 가져오기
+            response = requests.get(
+                f"https://api.finance.naver.com/siseJson.naver?symbol={code}&requestType=0&count=20&timeframe=day")
+            response_data = literal_eval(response.text.strip())
+
+            print("response_data", response_data)
+
+            # 응답 데이터를 DataFrame으로 변환
+            price_data = pd.DataFrame(response_data[1:], columns=response_data[0])
+            price_data.index = price_data["날짜"]
+            price_data = price_data[["시가", "고가", "저가", "종가", "거래량"]]
+
+            # 최신 날짜부터 역순으로 저가 값을 추출하여 3개의 저가 값을 얻을 때까지 반복
+            low_prices = []
+            for idx, row in price_data[::-1].iterrows():
+                low_price = row['저가']
+                low_prices.append(low_price)
+                if len(low_prices) >= 3:
+                    break
+
+            # 결과 출력
+            print("최신 3일간 저가:", low_prices)
+
+            # return last_ma_value
+
+        except Exception as e:
+            print("에러 발생:", e)
+
     #### 실시간 컨트롤
 
     def wait_for_request_delay(self):
@@ -2199,73 +2600,9 @@ class Kiwoom(QAxWidget):
     #     self.last_request_time = time.time()
 
 
-    def stock_start(self, data_type):
+    def real_stock_start(self, data_type):
 
-        if int(data_type) == 1:
-            ### 1번 Tr
-            moohanloop = True
-            moohanloop_count = 0
-            while moohanloop is True:
-
-                now = datetime.datetime.now()
-                now_time_HMS = now.strftime("%H%M%S")
-
-                if 90000 < int(now_time_HMS) < 153000:
-                    moohanloop_count += 1
-
-                    if moohanloop_count == 1:
-                        result = len(self.portfolio_stock_dict)
-                        print("갱신전 관리 종목 갯수", result)
-
-                        self.read_code()  # 저장된 종목들 불러온다.
-                        self.screen_number_setting()  # 스크린 번호를 할당
-
-                        my_port_many = 0
-                        for code in self.portfolio_stock_dict.keys():
-                            my_port_many += 1
-                            self.getItemInfo(code)
-                            QTest.qWait(300)
-
-
-                        print("내 종목 관리 갯수 : ", my_port_many)
-                        print("반복 카운트", moohanloop_count)
-
-                    if (moohanloop_count % 50) == 0:
-
-                        # 횟수제한
-                        # self.wait_for_request_delay()
-                        # self.detail_account_info()  # 예수금 갱신
-                        # self.last_request_time = time.time()
-
-                        result = len(self.portfolio_stock_dict)
-                        print("갱신전 관리 종목 갯수", result)
-
-                        self.read_code()  # 저장된 종목들 불러온다.
-                        self.screen_number_setting()  # 스크린 번호를 할당
-
-                        my_port_many = 0
-                        for code in self.portfolio_stock_dict.keys():
-                            my_port_many += 1
-                            self.getItemInfo(code)
-                            QTest.qWait(300)
-
-                        print("내 종목 관리 갯수 : ", my_port_many)
-                        print("반복 카운트", moohanloop_count)
-                else:
-                    print("아직 시간 안됐다...", now_time_HMS)
-
-                    for t in range(500):
-                        now = datetime.datetime.now()
-                        now_time_HMS = now.strftime("%H%M%S")
-
-                        if 89000 < int(now_time_HMS) < 153000:
-                            break
-                        QTest.qWait(500)
-
-
-                    QTest.qWait(5000)
-                QTest.qWait(100)
-        elif int(data_type) == 2:
+        if int(data_type) == 2:
             ### 2번 실시간
 
             result = len(self.portfolio_stock_dict)

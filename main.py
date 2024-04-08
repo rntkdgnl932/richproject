@@ -21,6 +21,7 @@ import re
 import numpy
 # 패키지 다운 필요
 # from pytesseract import image_to_string #
+# import FinanceDataReader as fdr
 
 # import keyboard
 
