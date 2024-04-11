@@ -2149,6 +2149,8 @@ class FirstTab(QWidget):
             self.kiwoom = Kiwoom()
             self.kiwoom.get_kiwoom_ready()
 
+            ######################## 내 종목에서 second_order_stock.txt 안의 종목이 없으면 txt 내용 삭제 and 처음 잔고 확인시 금액 판별 후 txt에 넣기
+
             # ## 실전테스트
             # code = "005930"
             #

@@ -639,7 +639,7 @@ class Kiwoom(QAxWidget):
                                     average_price = self.result_minute_kiwoom_db()
                                     print("10분봉 240 이평선에 팔기 240가격:", average_price)
                                     print("10분봉 240 이평선에 팔기 현재가격:", b)
-                                    if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_37"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:    # sto_fast
+                                    if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:    # sto_fast
 
                                         wa = []
                                         wa.append(sCode)
@@ -804,7 +804,7 @@ class Kiwoom(QAxWidget):
                                     average_price = self.result_minute_kiwoom_db()
                                     print("10분봉 240 이평선에 팔기 240가격:", average_price)
                                     print("10분봉 240 이평선에 팔기 현재가격:", b)
-                                    if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_37"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
+                                    if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
                                         wa = []
                                         wa.append(sCode)
 
@@ -1123,6 +1123,14 @@ class Kiwoom(QAxWidget):
                     moving_average_price = total_price / 240
                     print("moving_average_price1", moving_average_price)
                     self.result_minute_aver[code].update({"d_day_0_240": moving_average_price})
+
+                    # 현재 27 이평
+                    total_price = 0
+                    for value in self.calcul_data[:27]:
+                        total_price += int(value[1])
+                    moving_average_price = total_price / 27
+                    print("moving_average_price_27", moving_average_price)
+                    self.result_minute_aver[code].update({"d_day_0_27": moving_average_price})
 
                     # 현재 37 이평
                     total_price = 0
@@ -1738,7 +1746,7 @@ class Kiwoom(QAxWidget):
                                 average_price = self.result_minute_kiwoom_db()
                                 print("10분봉 240 이평선에 팔기 240가격:", average_price)
                                 print("10분봉 240 이평선에 팔기 현재가격:", b)
-                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_37"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
                                     wa = []
                                     wa.append(sCode)
 
@@ -1902,7 +1910,7 @@ class Kiwoom(QAxWidget):
                                 average_price = self.result_minute_kiwoom_db()
                                 print("10분봉 240 이평선에 팔기 240가격:", average_price)
                                 print("10분봉 240 이평선에 팔기 현재가격:", b)
-                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_37"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
                                     wa = []
                                     wa.append(sCode)
 
