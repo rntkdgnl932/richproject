@@ -2148,12 +2148,12 @@ class FirstTab(QWidget):
 
             self.kiwoom = Kiwoom()
             self.kiwoom.get_kiwoom_ready()
-            print("준비끝")
 
-            # code = "200670"
+            # ## 실전테스트
+            # code = "005930"
             #
             # self.kiwoom.minute_kiwoom_db(code=code, tic=10)
-            #
+            # #
             # average_price = self.kiwoom.result_minute_kiwoom_db()
             # if code in average_price.keys():
             #     print("존재한다!!!!!!!!10분 240 평균값:", average_price)
@@ -2161,7 +2161,7 @@ class FirstTab(QWidget):
             #
             # else:
             #     print("존재하지 않는다!!!!!!!!!!!!!!!", average_price)
-
+            # ## 실전 테스트 끝
 
 
             moohanloop = True
@@ -2173,60 +2173,79 @@ class FirstTab(QWidget):
                 now_time_HMS = now.strftime("%H%M%S")
 
 
-                if moohanloop_count == 1:
-                    print("주식 매매 중...", moohanloop_count, now_time_HMS)
-                    result_kiwoom = self.kiwoom.get_kiwoom_start()
-                    print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
+                if 90000 < int(now_time_HMS) < 153000:
+                    if moohanloop_count == 1:
+                        print("주식 매매 중...", moohanloop_count, now_time_HMS)
+                        result_kiwoom = self.kiwoom.get_kiwoom_start()
+                        print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
 
-                    with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
-                        result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
-                        file.write(str(result_kiwoom_data_1))
-                    with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
-                        result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
-                        file.write(str(result_kiwoom_data_2))
+                        with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
+                            result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
+                            file.write(str(result_kiwoom_data_1))
+                        with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
+                            result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
+                            file.write(str(result_kiwoom_data_2))
+
+                        with open(rich_file_path, "w", encoding='utf-8-sig') as file:
+                            json.dump(result_kiwoom[0], file)
+                        self.set_rand_int()
+
+                    elif moohanloop_count == 2:
+                        print("주식 매매 중...", moohanloop_count, now_time_HMS)
+                        result_kiwoom = self.kiwoom.get_kiwoom_start()
+                        print("result_kiwoom, 횟수", moohanloop_count, result_kiwoom)
+
+                        with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
+                            result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
+                            file.write(str(result_kiwoom_data_1))
+                        with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
+                            result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
+                            file.write(str(result_kiwoom_data_2))
+
+                        with open(rich_file_path, "w", encoding='utf-8-sig') as file:
+                            json.dump(result_kiwoom[0], file)
+                        self.set_rand_int()
+
+                    elif (moohanloop_count % 50) == 0:
+                        print("주식 매매 중...", moohanloop_count, now_time_HMS)
+                        result_kiwoom = self.kiwoom.get_kiwoom_start()
+                        print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
+
+                        with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
+                            result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
+                            file.write(str(result_kiwoom_data_1))
+                        with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
+                            result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
+                            file.write(str(result_kiwoom_data_2))
+
+                        with open(rich_file_path, "w", encoding='utf-8-sig') as file:
+                            json.dump(result_kiwoom[0], file)
+                        self.set_rand_int()
+
+                    if moohanloop_count != 1:
+                        QTest.qWait(5000)
+                    else:
+                        QTest.qWait(1000)
+                    # QTest.qWait(100)
 
 
-                    with open(rich_file_path, "w", encoding='utf-8-sig') as file:
-                        json.dump(result_kiwoom[0], file)
-                    self.set_rand_int()
-
-                elif moohanloop_count == 2:
-                    print("주식 매매 중...", moohanloop_count, now_time_HMS)
-                    result_kiwoom = self.kiwoom.get_kiwoom_start()
-                    print("result_kiwoom, 횟수", moohanloop_count, result_kiwoom)
-
-                    with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
-                        result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
-                        file.write(str(result_kiwoom_data_1))
-                    with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
-                        result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
-                        file.write(str(result_kiwoom_data_2))
-
-                    with open(rich_file_path, "w", encoding='utf-8-sig') as file:
-                        json.dump(result_kiwoom[0], file)
-                    self.set_rand_int()
-
-                elif (moohanloop_count % 50) == 0:
-                    print("주식 매매 중...", moohanloop_count, now_time_HMS)
-                    result_kiwoom = self.kiwoom.get_kiwoom_start()
-                    print("result_kiwoom, 횟수", result_kiwoom, moohanloop_count)
-
-                    with open(rich_mystock_path_1, "w", encoding='utf-8-sig') as file:
-                        result_kiwoom_data_1 = "총 매입금액 : " + str(result_kiwoom[1]) + "\n\n"
-                        file.write(str(result_kiwoom_data_1))
-                    with open(rich_mystock_path_2, "w", encoding='utf-8-sig') as file:
-                        result_kiwoom_data_2 = "현재 총 수익 : " + str(result_kiwoom[2]) + "\n\n"
-                        file.write(str(result_kiwoom_data_2))
-
-                    with open(rich_file_path, "w", encoding='utf-8-sig') as file:
-                        json.dump(result_kiwoom[0], file)
-                    self.set_rand_int()
-
-                if moohanloop_count != 1:
-                    QTest.qWait(5000)
                 else:
-                    QTest.qWait(1000)
+                    print("아직 시간 안됐다...", now_time_HMS)
+
+                    for t in range(500):
+                        now = datetime.datetime.now()
+                        now_time_HMS = now.strftime("%H%M%S")
+
+                        if 89000 < int(now_time_HMS) < 153000:
+                            break
+                        QTest.qWait(500)
+
+
+
                 QTest.qWait(100)
+
+
+
 #######################################################
                 # if 90000 < int(now_time_HMS) < 153000:
                 #     if moohanloop_count == 1:
@@ -2248,9 +2267,9 @@ class FirstTab(QWidget):
                 #             break
                 #         QTest.qWait(500)
                 #     QTest.qWait(5000)
-
-
-
+                #
+                #
+                #
                 # QTest.qWait(100)
 
         except Exception as e:
@@ -2319,7 +2338,7 @@ class Test_check(QThread):
 
         #
 
-
+        go_test()
 
 
 
