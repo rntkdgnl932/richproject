@@ -2225,7 +2225,7 @@ class FirstTab(QWidget):
                         self.set_rand_int()
 
                     if moohanloop_count != 1:
-                        QTest.qWait(5000)
+                        QTest.qWait(100)
                     else:
                         QTest.qWait(1000)
                     # QTest.qWait(100)
