@@ -7,6 +7,7 @@ import requests
 # import http.client
 import json
 import pandas as pd
+from ast import literal_eval
 
 import variable as v_
 
@@ -40,35 +41,70 @@ def go_test():
 
     print("hi hello")
 
+    period = 9
     code = "005930"
-    period = 5
-    smoothing = 3
 
-    print("calculate_stochastic_fast", code)
+    print("calculate_biii")
     # 네이버 금융 API를 통해 데이터 가져오기
     response = requests.get(
         f"https://api.finance.naver.com/siseJson.naver?symbol={code}&requestType=0&count=50&timeframe=day")
     response_data = literal_eval(response.text.strip())
 
+    print("response_data", response_data)
 
     # 응답 데이터를 DataFrame으로 변환
     price_data = pd.DataFrame(response_data[1:], columns=response_data[0])
     price_data.index = price_data["날짜"]
     price_data = price_data[["시가", "고가", "저가", "종가", "거래량"]]
 
+    close = price_data['종가']
+    low = price_data['저가']
+    high = price_data['고가']
+    volume = price_data['거래량']  # 오타 수정
 
-    #
-    # Calculate Fast %K
-    lowest_low = price_data['저가'].rolling(window=period).min()
-    highest_high = price_data['고가'].rolling(window=period).max()
-    fast_k = ((price_data['종가'] - lowest_low) / (highest_high - lowest_low)) * 100
+    # volume 데이터가 없는 경우를 처리
+    if volume.empty:
+        print("Volume 데이터가 없습니다.")
+        return None
 
-    # Calculate Fast %D
-    fast_d = fast_k.rolling(window=smoothing).mean()
+    # Bill 값 계산
+    value1 = (close - low) ** 2 - (high - close) ** 2
+    value2 = high - low
+    bill = (value1 / value2) * volume
+    bill_sum = bill.rolling(window=period).sum()
 
     # 결과 출력
-    print("Fast %K:", fast_k.iloc[-1])
-    print("Fast %D:", fast_d.iloc[-1])
+    print("result biii:", bill_sum)
+
+    # code = "005930"
+    # period = 5
+    # smoothing = 3
+    #
+    # print("calculate_stochastic_fast", code)
+    # # 네이버 금융 API를 통해 데이터 가져오기
+    # response = requests.get(
+    #     f"https://api.finance.naver.com/siseJson.naver?symbol={code}&requestType=0&count=50&timeframe=day")
+    # response_data = literal_eval(response.text.strip())
+    #
+    #
+    # # 응답 데이터를 DataFrame으로 변환
+    # price_data = pd.DataFrame(response_data[1:], columns=response_data[0])
+    # price_data.index = price_data["날짜"]
+    # price_data = price_data[["시가", "고가", "저가", "종가", "거래량"]]
+    #
+    #
+    # #
+    # # Calculate Fast %K
+    # lowest_low = price_data['저가'].rolling(window=period).min()
+    # highest_high = price_data['고가'].rolling(window=period).max()
+    # fast_k = ((price_data['종가'] - lowest_low) / (highest_high - lowest_low)) * 100
+    #
+    # # Calculate Fast %D
+    # fast_d = fast_k.rolling(window=smoothing).mean()
+    #
+    # # 결과 출력
+    # print("Fast %K:", fast_k.iloc[-1])
+    # print("Fast %D:", fast_d.iloc[-1])
 
     # # Calculate %K
     # lowest_low = price_data['저가'].rolling(window=period).min()

@@ -456,6 +456,7 @@ class Kiwoom(QAxWidget):
                 ###########################지대로
                 sCode = code
 
+                # a = self.dynamicCall("GetCommRealData(QString, int)", sCode, self.realType.REALTYPE['주식체결']['체결시간'])  # HHMMSS
                 b = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "현재가")   # +-0000
                 b = abs(int(b))
                 c = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "전일대비")  # +-0000
@@ -464,10 +465,17 @@ class Kiwoom(QAxWidget):
                 d = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "등락율")  # +-0000
                 d = float(d)
 
+                # e = self.dynamicCall("GetCommRealData(QString, int)", sCode, self.realType.REALTYPE['주식체결']['(최우선)매도호가'])  # +-0000
+                # e = abs(int(e))
+
+                # f = self.dynamicCall("GetCommRealData(QString, int)", sCode, self.realType.REALTYPE['주식체결']['(최우선)매수호가'])  # +-0000
+                # f = abs(int(f))
 
                 g = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "거래량")  # +-0000
                 g = abs(int(g))
 
+                # h = self.dynamicCall("GetCommRealData(QString, int)", sCode, self.realType.REALTYPE['주식체결']['누적거래량'])  # +-0000
+                # h = abs(int(h))
 
                 i = self.dynamicCall("GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "고가")  # +-0000
                 i = abs(int(i))
@@ -570,79 +578,40 @@ class Kiwoom(QAxWidget):
 
                                     if (meme_rate > self.revenue or meme_rate < -self.revenue) and sCode not in self.sell_ing:
 
-                                        # 만약 7일선 아래일 경우 전량 매도??? 오케이
-                                        result_me = self.calculate_moving_average(sCode, 7)
-                                        if int(result_me) > int(b):  # 7일선
-                                            wa = []
-                                            wa.append(sCode)
+                                        wa = []
+                                        wa.append(sCode)
 
-                                            if len(wa) > 1:
-                                                wa.clear()
-                                                pass
-                                            else:
-                                                print("%s %s" % ("8% 마지막 신규매도를 한다_1_2", sCode))
-
-                                                # 횟수 제한 딜레이
-                                                self.wait_for_request_delay()
-                                                # self.last_request_time = time.time()
-
-                                                order_success = self.dynamicCall(
-                                                    "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-                                                    ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'],
-                                                     self.account_num, 2, sCode, asd['매매가능수량'], 0,
-                                                     self.realType.SENDTYPE['거래구분']['시장가'], ""])
-
-                                                self.last_request_time = time.time()
-
-                                                if order_success == 0:
-                                                    print("매도주문 전달 성공", meme_rate)
-
-                                                    if sCode not in self.sell_ing:
-                                                        self.sell_ing.append(sCode)
-
-                                                    if sCode in self.account_stock_dict.keys():
-                                                        del self.account_stock_dict[sCode]
-
-                                                else:
-                                                    print("매도주문 전달 실패")
+                                        if len(wa) > 1:
+                                            wa.clear()
+                                            pass
                                         else:
-                                            wa = []
-                                            wa.append(sCode)
+                                            print("%s %s" % ("처음 신규매도를 한다_1_1", sCode))
 
-                                            if len(wa) > 1:
-                                                wa.clear()
-                                                pass
+                                            # 횟수 제한 딜레이
+                                            self.wait_for_request_delay()
+                                            # self.last_request_time = time.time()
+
+                                            order_success = self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)", ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode, int(first_meme_price), 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                            self.last_request_time = time.time()
+
+                                            if order_success == 0:
+                                                print("매도주문 전달 성공", meme_rate)
+                                                if sCode not in self.sell_ing:
+                                                    self.sell_ing.append(sCode)
+
+                                                if sCode in self.account_stock_dict.keys() and asd['매매가능수량'] == 1:
+                                                    del self.account_stock_dict[sCode]
+
                                             else:
-                                                print("%s %s" % ("처음 신규매도를 한다_1_1", sCode))
-
-                                                # 횟수 제한 딜레이
-                                                self.wait_for_request_delay()
-                                                # self.last_request_time = time.time()
-
-                                                order_success = self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)", ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode, int(first_meme_price), 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
-
-                                                self.last_request_time = time.time()
-
-                                                if order_success == 0:
-                                                    print("매도주문 전달 성공", meme_rate)
-                                                    if sCode not in self.sell_ing:
-                                                        self.sell_ing.append(sCode)
-
-                                                    if sCode in self.account_stock_dict.keys() and asd['매매가능수량'] == 1:
-                                                        del self.account_stock_dict[sCode]
-
-                                                else:
-                                                    print("매도주문 전달 실패")
+                                                print("매도주문 전달 실패")
                                 elif my_first_meme == False:
                                     result_me = self.calculate_moving_average(sCode, 7)
 
                                     print("int(result_me)", int(result_me))
                                     print("계좌잔고평가내역에 있고 오늘 산 잔고에는 없을 경우 : 현재 가격(b)...", b)
 
-                                    average_price = self.result_minute_kiwoom_db()
-                                    print("10분봉 240 이평선에 팔기 240가격:", average_price)
-
-                                    if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b):
+                                    if int(result_me) > int(b):  # 7일선 and 전량매도
 
                                         wa = []
                                         wa.append(sCode)
@@ -651,7 +620,7 @@ class Kiwoom(QAxWidget):
                                             wa.clear()
                                             pass
                                         else:
-                                            print("%s %s" % ("8% 마지막 신규매도를 한다_1_2", sCode))
+                                            print("%s %s" % ("7% 마지막 신규매도를 한다_1_2", sCode))
 
                                             # 횟수 제한 딜레이
                                             self.wait_for_request_delay()
@@ -672,8 +641,11 @@ class Kiwoom(QAxWidget):
 
                                             else:
                                                 print("매도주문 전달 실패")
-                                    elif int(result_me) > int(b):   # 7일선
-                                        if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:    # sto_fast
+                                    else:
+                                        average_price = self.result_minute_kiwoom_db()
+                                        print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                        print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                        if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:    # sto_fast
 
                                             wa = []
                                             wa.append(sCode)
@@ -771,79 +743,40 @@ class Kiwoom(QAxWidget):
                                 if my_first_meme == True or my_second_meme == False:
                                     if (meme_rate > self.revenue or meme_rate < -self.revenue) and sCode not in self.sell_ing:
 
-                                        result_me = self.calculate_moving_average(sCode, 7)
+                                        wa = []
+                                        wa.append(sCode)
 
-                                        if int(result_me) > int(b):  # 7일선 보다 아래일 경우 전량 매도
-                                            wa = []
-                                            wa.append(sCode)
-
-                                            if len(wa) > 1:
-                                                wa.clear()
-                                                pass
-                                            else:
-                                                print("%s %s" % ("8% 마지막 신규매도를 한다_2_2", sCode))
-
-                                                # 횟수 제한 딜레이
-                                                self.wait_for_request_delay()
-
-                                                order_success = self.dynamicCall(
-                                                    "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-                                                    ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'],
-                                                     self.account_num, 2, sCode,
-                                                     jd['주문가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
-
-                                                self.last_request_time = time.time()
-
-                                                if order_success == 0:
-                                                    print("매도주문 전달 성공", meme_rate)
-                                                    if sCode not in self.sell_ing:
-                                                        self.sell_ing.append(sCode)
-
-                                                    if sCode in self.account_stock_dict.keys():
-                                                        del self.account_stock_dict[sCode]
-
-                                                else:
-                                                    print("매도주문 전달 실패")
-
+                                        if len(wa) > 1:
+                                            wa.clear()
+                                            pass
                                         else:
+                                            print("%s %s" % ("처음 신규매도를 한다_2_1", sCode))
 
-                                            wa = []
-                                            wa.append(sCode)
+                                            # 횟수 제한 딜레이
+                                            self.wait_for_request_delay()
 
-                                            if len(wa) > 1:
-                                                wa.clear()
-                                                pass
+
+                                            order_success = self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)", ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode, int(first_meme_price), 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                            self.last_request_time = time.time()
+
+                                            if order_success == 0:
+                                                print("매도주문 전달 성공", meme_rate)
+                                                if sCode not in self.sell_ing:
+                                                    self.sell_ing.append(sCode)
+
+                                                if sCode in self.account_stock_dict.keys() and jd['주문가능수량'] == 1:
+                                                    del self.account_stock_dict[sCode]
+
                                             else:
-                                                print("%s %s" % ("처음 신규매도를 한다_2_1", sCode))
-
-                                                # 횟수 제한 딜레이
-                                                self.wait_for_request_delay()
-
-
-                                                order_success = self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)", ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode, int(first_meme_price), 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
-
-                                                self.last_request_time = time.time()
-
-                                                if order_success == 0:
-                                                    print("매도주문 전달 성공", meme_rate)
-                                                    if sCode not in self.sell_ing:
-                                                        self.sell_ing.append(sCode)
-
-                                                    if sCode in self.account_stock_dict.keys() and jd['주문가능수량'] == 1:
-                                                        del self.account_stock_dict[sCode]
-
-                                                else:
-                                                    print("매도주문 전달 실패")
+                                                print("매도주문 전달 실패")
                                 elif my_first_meme == False:
                                     result_me = self.calculate_moving_average(sCode, 7)
 
                                     print("int(result_me)", int(result_me))
                                     print("오늘 산 잔고에 있을 경우 : 현재가격(b)...", b)
 
-                                    average_price = self.result_minute_kiwoom_db()
-                                    print("10분봉 240 이평선에 팔기 240가격:", average_price)
-
-                                    if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b):
+                                    if int(result_me) > int(b): # 7일선 and 전량매도
 
                                         wa = []
                                         wa.append(sCode)
@@ -852,7 +785,7 @@ class Kiwoom(QAxWidget):
                                             wa.clear()
                                             pass
                                         else:
-                                            print("%s %s" % ("8% 마지막 신규매도를 한다_2_2", sCode))
+                                            print("%s %s" % ("7% 마지막 신규매도를 한다_2_2", sCode))
 
                                             # 횟수 제한 딜레이
                                             self.wait_for_request_delay()
@@ -875,9 +808,11 @@ class Kiwoom(QAxWidget):
 
                                             else:
                                                 print("매도주문 전달 실패")
-                                    elif int(result_me) > int(b): # 7일선
-
-                                        if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
+                                    else:
+                                        average_price = self.result_minute_kiwoom_db()
+                                        print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                        print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                        if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
                                             wa = []
                                             wa.append(sCode)
 
@@ -913,16 +848,13 @@ class Kiwoom(QAxWidget):
 
                     # 등락율이 1.0 % 이상이고 오늘 산 잔고에 없을 경우
 
-                    elif sCode not in self.jango_dict.keys():
+                    # if sCode not in self.jango_dict.keys():
 
-                        average_price = self.result_minute_kiwoom_db()
-                        print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                    elif -1 < d < 5:
 
-                        if -1 < d < 3:
+                        if sCode not in self.jango_dict:
 
-                        # if sCode not in self.jango_dict:
-
-                            print("3_1")
+                            print("3")
 
                             wa = []
                             wa.append(sCode)
@@ -973,100 +905,6 @@ class Kiwoom(QAxWidget):
 
                                                 self.wait_for_request_delay()
                                                 order_success = self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)", ["시장가매수", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 1, sCode, quantity, 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
-
-                                                self.last_request_time = time.time()
-
-                                                if order_success == 0:
-                                                    print("매수주문 전달 성공", order_success)
-                                                    self.buy_ing.append(sCode)
-                                                else:
-                                                    print("매수주문 전달 실패", order_success)
-
-                                            else:
-
-                                                # 횟수 제한 딜레이
-
-                                                code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
-
-                                                already_stock = False
-
-                                                if len(self.not_account2_stock_dict) != 0:
-
-                                                    for order_number in self.not_account2_stock_dict.keys():
-                                                        code = self.not_account2_stock_dict[order_number]['종목코드']
-                                                        if sCode in code:
-                                                            already_stock = True
-                                                            break
-                                                if already_stock == False:
-
-                                                    print("매수취소 대기에 없다.", sCode, code_nm, self.buy_ing)
-
-                                                    # if sCode in self.buy_ing:
-                                                    #     self.buy_ing.remove(sCode)
-
-                                                elif already_stock == True:
-
-                                                    print("이미 종목 매수 중이다.", sCode, code_nm, code, self.buy_ing)
-
-                                                    if sCode not in self.buy_ing:
-                                                        self.buy_ing.append(sCode)
-
-                                        else:
-                                            print("code 검색...이미 종목 있다!!!!!!!!!")
-                        elif sCode in average_price.keys() and int(average_price[sCode]["sto_fast"]) < 20:
-                            print("3_2")
-
-                            wa = []
-                            wa.append(sCode)
-
-                            if len(wa) > 1:
-                                wa.clear()
-                                pass
-                            else:
-                                print("3_2 : self.use_money", self.use_money)
-                                # result = (self.use_money * 0.1) / b
-                                result = self.buy_money / b
-
-                                if result >= 1:
-
-                                    quantity = int(result)
-                                    # e => 현재가
-
-                                    print("3_2 : quantity", quantity)
-
-                                    if quantity > 0:
-
-                                        print("3_2 : order_number", self.not_account2_stock_dict)
-
-                                        already_stock = False
-
-                                        if len(self.not_account2_stock_dict) != 0:
-
-                                            for order_number in self.not_account2_stock_dict.keys():
-                                                code = self.not_account2_stock_dict[order_number]['종목코드']
-                                                if code == sCode:
-                                                    already_stock = True
-                                                    break
-
-                                        print("3_2 : code : already_stock ?", already_stock, sCode)
-
-                                        if already_stock == False:
-                                            if sCode not in self.buy_ing:
-
-                                                # 횟수 제한 딜레이
-
-                                                code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
-
-                                                print("%s %s %s" % ("신규매수를 한다_3_2", sCode, code_nm))
-
-                                                print("quantityquantityquantity", quantity)
-
-                                                self.wait_for_request_delay()
-                                                order_success = self.dynamicCall(
-                                                    "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-                                                    ["시장가매수", self.portfolio_stock_dict[sCode]['주문용스크린번호'],
-                                                     self.account_num, 1, sCode, quantity, 0,
-                                                     self.realType.SENDTYPE['거래구분']['시장가'], ""])
 
                                                 self.last_request_time = time.time()
 
@@ -1781,7 +1619,522 @@ class Kiwoom(QAxWidget):
 
             else:
 
-                print("내용 지웠음")
+                # 계좌잔고평가내역에 있고 오늘 산 잔고에는 없을 경우
+                if sCode in self.account_stock_dict.keys() and sCode not in self.jango_dict.keys():
+                    print("1")
+                    # print("%s %s" % ("신규매도를 한다_1", sCode))
+                    # 1: 신규매수, 2:신규매도, 3:매수취소, 4:매도취소, 5:매수정정, 6:매도정정
+
+                    asd = self.account_stock_dict[sCode]
+
+                    if int(asd['매매가능수량']) > 1:
+                        first_meme_price = int(asd['매매가능수량']) / 2
+                    else:
+                        first_meme_price = asd['매매가능수량']
+
+                    medo = b * asd['매매가능수량']
+                    mesoo = asd['매입가'] * asd['매매가능수량']
+
+                    meme_tax = (mesoo * self.meme_tax_price) + (medo * self.meme_tax_price) + (medo * self.stock_tax_price)
+
+                    meme_rate = (medo - mesoo - meme_tax) / mesoo * 100
+                    # meme_rate = (b / asd['매입가']) * 100 - 100
+
+                    print("매도 매수 세금 수익률", medo, mesoo, meme_tax, meme_rate)
+
+                    # 2차 매도인지 여부
+                    my_second_meme = True
+                    result_sell_quantity = self.sell_money
+                    result_all_sell_quantity = int(asd['매매가능수량']) * int(asd['매입가'])
+                    if result_all_sell_quantity > result_sell_quantity:
+                        my_second_meme = False
+
+                    # 횟수 제한 딜레이
+                    code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
+
+                    print("종목명, 수익률, 매매수량", code_nm, meme_rate, int(first_meme_price), asd['매입가'], b)
+
+                    #################
+                    if asd['매매가능수량'] > 0:
+
+                        my_first_meme = True
+
+                        if os.path.isfile(second_order_path) == True:
+                            file = open(second_order_path, "r", encoding='utf-8-sig')
+
+                            lines = file.readlines()
+
+                            if len(lines) > 0:
+
+                                for i in range(len(lines)):
+                                    if lines[i] != "":
+                                        ls = lines[i].split("\t")
+
+                                        if sCode == ls[0]:
+                                            my_first_meme = False
+                                            break
+                        else:
+                            file = open(second_order_path, "w", encoding='utf-8-sig')
+                            file.write("")
+                            file.close()
+
+                        if my_first_meme == True or my_second_meme == False:
+                            # my_first_meme : txt 파일에 없으면 True => 아직 1차 매도 안한 상황
+                            # my_second_meme : 잔고에 있는 총 매입금액이 2차 매도기준보다 크면 True => 아직 1차 매도 안한 상황
+
+                            if (meme_rate > self.revenue or meme_rate < -self.revenue) and sCode not in self.sell_ing:
+
+                                wa = []
+                                wa.append(sCode)
+
+                                if len(wa) > 1:
+                                    wa.clear()
+                                    pass
+                                else:
+                                    print("%s %s" % ("처음 신규매도를 한다_1_1", sCode))
+
+                                    # 횟수 제한 딜레이
+                                    self.wait_for_request_delay()
+
+                                    order_success = self.dynamicCall(
+                                        "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                        ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode,
+                                         int(first_meme_price), 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                    self.last_request_time = time.time()
+
+                                    if order_success == 0:
+                                        print("매도주문 전달 성공", meme_rate)
+                                        if sCode not in self.sell_ing:
+                                            self.sell_ing.append(sCode)
+
+                                        if sCode in self.account_stock_dict.keys() and asd['매매가능수량'] == 1:
+                                            del self.account_stock_dict[sCode]
+
+                                    else:
+                                        print("매도주문 전달 실패")
+                        elif my_first_meme == False:
+                            result_me = self.calculate_moving_average(sCode, 7)
+
+                            print("int(result_me)", int(result_me))
+                            print("계좌잔고평가내역에 있고 오늘 산 잔고에는 없을 경우 : 현재가격(b)", b)
+
+                            if int(result_me) > int(b):  # 7일선 and 전량매도
+
+                                wa = []
+                                wa.append(sCode)
+
+                                if len(wa) > 1:
+                                    wa.clear()
+                                    pass
+                                else:
+                                    print("%s %s" % ("7% 마지막 신규매도를 한다_1_2", sCode))
+
+                                    # 횟수 제한 딜레이
+                                    self.wait_for_request_delay()
+
+                                    order_success = self.dynamicCall(
+                                        "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                        ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode,
+                                         asd['매매가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                    self.last_request_time = time.time()
+
+                                    if order_success == 0:
+                                        print("매도주문 전달 성공", meme_rate)
+
+                                        if sCode not in self.sell_ing:
+                                            self.sell_ing.append(sCode)
+
+                                        if sCode in self.account_stock_dict.keys():
+                                            del self.account_stock_dict[sCode]
+
+                                    else:
+                                        print("매도주문 전달 실패")
+                            else:
+                                average_price = self.result_minute_kiwoom_db()
+                                print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
+                                    wa = []
+                                    wa.append(sCode)
+
+                                    if len(wa) > 1:
+                                        wa.clear()
+                                        pass
+                                    else:
+                                        print("%s %s" % ("10분봉 240 마지막 신규매도를 한다_2_2", sCode))
+
+                                        # 횟수 제한 딜레이
+                                        self.wait_for_request_delay()
+
+                                        order_success = self.dynamicCall(
+                                            "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                            ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2,
+                                             sCode,
+                                             asd['매매가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                        self.last_request_time = time.time()
+
+                                        if order_success == 0:
+                                            print("매도주문 전달 성공", meme_rate)
+                                            if sCode not in self.sell_ing:
+                                                self.sell_ing.append(sCode)
+
+                                            if sCode in self.account_stock_dict.keys():
+                                                del self.account_stock_dict[sCode]
+
+                                        else:
+                                            print("매도주문 전달 실패")
+
+
+                    ##################
+                # 오늘 산 잔고에 있을 경우
+                elif sCode in self.jango_dict.keys():
+                    print("2")
+
+                    jd = self.jango_dict[sCode]
+
+                    if int(jd['주문가능수량']) > 1:
+                        first_meme_price = int(jd['주문가능수량']) / 2
+                    else:
+                        first_meme_price = jd['주문가능수량']
+
+                    medo = b * jd['주문가능수량']
+                    mesoo = jd['매입단가'] * jd['주문가능수량']
+
+                    meme_tax = (mesoo * self.meme_tax_price) + (medo * self.meme_tax_price) + (medo * self.stock_tax_price)
+
+
+
+                    meme_rate = (medo - mesoo - meme_tax) / mesoo * 100
+                    # meme_rate = (b / jd['매입단가']) * 100 - 100
+
+                    print("매도 매수 세금 수익률", medo, mesoo, meme_tax, meme_rate)
+
+                    code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
+
+                    # 2차 매도인지 여부
+                    my_second_meme = True
+                    result_sell_quantity = self.sell_money
+                    result_all_sell_quantity = int(jd['주문가능수량']) * int(jd['매입단가'])
+                    if result_all_sell_quantity > result_sell_quantity:
+                        my_second_meme = False
+
+                    print("종목명, 수익률, 매매수량", code_nm, meme_rate, int(first_meme_price), jd['매입단가'], b)
+
+                    if jd['주문가능수량'] > 0:
+
+                        my_first_meme = True
+
+                        if os.path.isfile(second_order_path) == True:
+                            file = open(second_order_path, "r", encoding='utf-8-sig')
+
+                            lines = file.readlines()
+
+                            if len(lines) > 0:
+
+                                for i in range(len(lines)):
+                                    if lines[i] != "":
+                                        ls = lines[i].split("\t")
+
+                                        if sCode == ls[0]:
+                                            my_first_meme = False
+                                            break
+                        else:
+                            file = open(second_order_path, "w", encoding='utf-8-sig')
+                            file.write("")
+                            file.close()
+
+                        if my_first_meme == True or my_second_meme == False:
+                            if (meme_rate > self.revenue or meme_rate < -self.revenue) and sCode not in self.sell_ing:
+
+                                wa = []
+                                wa.append(sCode)
+
+                                if len(wa) > 1:
+                                    wa.clear()
+                                    pass
+                                else:
+                                    print("%s %s" % ("처음 신규매도를 한다_2_1", sCode))
+
+                                    # 횟수 제한 딜레이
+                                    self.wait_for_request_delay()
+
+                                    order_success = self.dynamicCall(
+                                        "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                        ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode,
+                                         int(first_meme_price), 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                    self.last_request_time = time.time()
+
+                                    if order_success == 0:
+                                        print("매도주문 전달 성공", meme_rate)
+                                        if sCode not in self.sell_ing:
+                                            self.sell_ing.append(sCode)
+
+                                        if sCode in self.account_stock_dict.keys() and jd['주문가능수량'] == 1:
+                                            del self.account_stock_dict[sCode]
+
+                                    else:
+                                        print("매도주문 전달 실패")
+                        elif my_first_meme == False:
+                            result_me = self.calculate_moving_average(sCode, 7)
+
+                            print("int(result_me)", int(result_me))
+                            print("오늘 산 잔고에 있을 경우 : 현재가 (b)", b)
+
+                            if int(result_me) > int(b):  # 7일선 and 전량매도
+
+                                wa = []
+                                wa.append(sCode)
+
+                                if len(wa) > 1:
+                                    wa.clear()
+                                    pass
+                                else:
+                                    print("%s %s" % ("7% 마지막 신규매도를 한다_2_2", sCode))
+
+                                    # 횟수 제한 딜레이
+                                    self.wait_for_request_delay()
+
+                                    order_success = self.dynamicCall(
+                                        "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                        ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2, sCode,
+                                         jd['주문가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                    self.last_request_time = time.time()
+
+                                    if order_success == 0:
+                                        print("매도주문 전달 성공", meme_rate)
+                                        if sCode not in self.sell_ing:
+                                            self.sell_ing.append(sCode)
+
+                                        if sCode in self.account_stock_dict.keys():
+                                            del self.account_stock_dict[sCode]
+
+                                    else:
+                                        print("매도주문 전달 실패")
+                            else:
+                                average_price = self.result_minute_kiwoom_db()
+                                print("10분봉 240 이평선에 팔기 240가격:", average_price)
+                                print("10분봉 240 이평선에 팔기 현재가격:", b)
+                                if sCode in average_price.keys() and int(average_price[sCode]["d_day_0_240"]) > int(b) or int(average_price[sCode]["d_day_0_27"]) > int(b) and int(average_price[sCode]["sto_fast"]) < 20:
+                                    wa = []
+                                    wa.append(sCode)
+
+                                    if len(wa) > 1:
+                                        wa.clear()
+                                        pass
+                                    else:
+                                        print("%s %s" % ("10분봉 240 마지막 신규매도를 한다_2_2", sCode))
+
+                                        # 횟수 제한 딜레이
+                                        self.wait_for_request_delay()
+
+                                        order_success = self.dynamicCall(
+                                            "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                            ["신규매도", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 2,
+                                             sCode,
+                                             jd['주문가능수량'], 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                        self.last_request_time = time.time()
+
+                                        if order_success == 0:
+                                            print("매도주문 전달 성공", meme_rate)
+                                            if sCode not in self.sell_ing:
+                                                self.sell_ing.append(sCode)
+
+                                            if sCode in self.account_stock_dict.keys():
+                                                del self.account_stock_dict[sCode]
+
+                                        else:
+                                            print("매도주문 전달 실패")
+                # 등락율이 1.0 % 이상이고 오늘 산 잔고에 없을 경우
+
+                # if sCode not in self.jango_dict.keys():
+
+                elif d > 1.0 and self.buy_money > b:
+
+                    if sCode not in self.jango_dict:
+
+                        print("3")
+
+                        wa = []
+                        wa.append(sCode)
+
+                        if len(wa) > 1:
+                            wa.clear()
+                            pass
+                        else:
+                            print("3 : self.use_money", self.use_money)
+                            # result = (self.use_money * 0.1) / b
+                            result = self.buy_money / b
+
+                            if result >= 1:
+
+                                quantity = int(result)
+                                # e => 현재가
+
+                                print("3 : quantity", quantity)
+
+                                if quantity > 0:
+
+                                    print("3 : order_number", self.not_account2_stock_dict)
+
+                                    already_stock = False
+
+                                    if len(self.not_account2_stock_dict) != 0:
+
+                                        for order_number in self.not_account2_stock_dict.keys():
+                                            code = self.not_account2_stock_dict[order_number]['종목코드']
+                                            if code == sCode:
+                                                already_stock = True
+                                                break
+
+                                    print("3 : code : already_stock ?", already_stock, sCode)
+
+                                    if already_stock == False:
+                                        if sCode not in self.buy_ing:
+
+                                            # 횟수 제한 딜레이
+                                            self.wait_for_request_delay()
+
+                                            code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
+
+                                            print("%s %s %s" % ("신규매수를 한다_1_1", sCode, code_nm))
+
+                                            print("quantityquantityquantity", quantity)
+
+                                            order_success = self.dynamicCall(
+                                                "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                                ["시장가매수", self.portfolio_stock_dict[sCode]['주문용스크린번호'], self.account_num, 1,
+                                                 sCode, quantity, 0, self.realType.SENDTYPE['거래구분']['시장가'], ""])
+
+                                            self.last_request_time = time.time()
+
+                                            if order_success == 0:
+                                                print("매수주문 전달 성공", order_success)
+                                                self.buy_ing.append(sCode)
+                                            else:
+                                                print("매수주문 전달 실패", order_success)
+
+                                        else:
+                                            code_nm = self.dynamicCall("GetMasterCodeName(QString)", sCode)
+
+                                            already_stock = False
+
+                                            if len(self.not_account2_stock_dict) != 0:
+
+                                                for order_number in self.not_account2_stock_dict.keys():
+                                                    code = self.not_account2_stock_dict[order_number]['종목코드']
+                                                    if sCode in code:
+                                                        already_stock = True
+                                                        break
+                                            if already_stock == False:
+
+                                                print("매수취소 대기에 없다.", sCode, code_nm, self.buy_ing)
+
+                                                # if sCode in self.buy_ing:
+                                                #     self.buy_ing.remove(sCode)
+
+                                            elif already_stock == True:
+
+                                                print("이미 종목 매수 중이다.", sCode, code_nm, code, self.buy_ing)
+
+                                                if sCode not in self.buy_ing:
+                                                    self.buy_ing.append(sCode)
+
+                                    else:
+                                        print("code 검색...이미 종목 있다!!!!!!!!!")
+                # else:
+                # ########################### 매수 중복중인거 해결부터 하기
+
+                if len(self.not_account2_stock_dict) > 0:
+
+                    print("4")
+
+                    not_meme_list = list(self.not_account2_stock_dict)
+
+                    for order_num in not_meme_list:
+                        code = self.not_account2_stock_dict[order_num]["종목코드"]
+                        meme_price = self.not_account2_stock_dict[order_num]["주문가격"]
+                        not_quantity = self.not_account2_stock_dict[order_num]["미체결수량"]
+                        order_gubun = self.not_account2_stock_dict[order_num]["주문구분"]
+
+                        if order_gubun == "매수" and not_quantity > 0 and b > meme_price:
+                            wa = []
+                            wa.append(code)
+
+                            if len(wa) > 1:
+                                wa.clear()
+                                pass
+                            else:
+                                print("%s %s" % ("매수취소 한다", code))
+
+                                # 횟수 제한 딜레이
+                                self.wait_for_request_delay()
+
+                                order_success = self.dynamicCall(
+                                    "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                    ["매수취소", self.portfolio_stock_dict[code]['주문용스크린번호'], self.account_num, 3, code, 0, 0,
+                                     self.realType.SENDTYPE['거래구분']['지정가'], order_num])
+
+                                self.last_request_time = time.time()
+
+                                if order_success == 0:
+                                    if code in self.buy_ing:
+                                        self.buy_ing.remove(code)
+                                    print("매수취소 주문 전달 성공")
+                                else:
+                                    print("매수취소 주문 전달 실패")
+                        elif not_quantity == 0:
+                            del self.not_account2_stock_dict[order_num]
+                            if code in self.buy_ing:
+                                self.buy_ing.remove(code)
+                            if code in self.sell_ing:
+                                self.sell_ing.remove(code)
+
+                        elif order_gubun == "매도" and not_quantity > 0 and b < meme_price:
+
+                            wa = []
+                            wa.append(code)
+
+                            if len(wa) > 1:
+                                wa.clear()
+                                pass
+                            else:
+                                print("%s %s" % ("매도취소 한다", code))
+                                # 횟수 제한 딜레이
+                                self.wait_for_request_delay()
+
+                                order_success = self.dynamicCall(
+                                    "SendOrder(QString, QString, QString ,int, QString, int, int, QString, QString)",
+                                    ["매도취소", self.portfolio_stock_dict[code]['주문용스크린번호'], self.account_num, 4, code, 0, 0,
+                                     self.realType.SENDTYPE['거래구분']['지정가'], order_num])  # order_num 은 어떤 주문을 취소할 것인가.
+
+                                self.last_request_time = time.time()
+
+                                if order_success == 0:
+                                    if code in self.sell_ing:
+                                        self.sell_ing.remove(code)
+
+                                    print("%s 매도취소 전달 성공" % code)  # 체결잔고에서  del을 했기 때문에 여기서 하지 않는다.
+
+                                else:
+                                    print("%s 매도취소 전달 실패" % code)
+
+
+                # ## 마지막 잠시 없애기
+                #
+                # for key, value in self.portfolio_stock_dict.copy().items():
+                #
+                #     if key == sCode:
+                #         print("실시간 제거 완료", sCode, self.portfolio_stock_dict[sCode]['스크린번호'])
+                #         self.dynamicCall("SetRealRemove(String, String)", self.portfolio_stock_dict[sCode]['스크린번호'], sCode)
+                #         self.cancel_screen_number(self.portfolio_stock_dict[sCode]['스크린번호'])
+                #         QTest.qWait(100)
+                #         break
 
 
 
